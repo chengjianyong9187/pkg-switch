@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runDoctor } from "../../src/core/doctor-service.js";
+import { createAppPaths } from "../../src/storage/app-paths.js";
+import { writeJsonFile } from "../../src/storage/config-repo.js";
 
 describe("runDoctor", () => {
   let homeDir: string | undefined;
@@ -30,6 +32,47 @@ describe("runDoctor", () => {
         expect.objectContaining({ name: "npm-command", status: "ok" }),
         expect.objectContaining({ name: "pnpm-command", status: "ok" }),
         expect.objectContaining({ name: "yarn-command", status: "warning" })
+      ])
+    );
+  });
+
+  it("应诊断 activeProfile 不存在、registry 非法和 alwaysAuth 缺少 token", async () => {
+    homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-doctor-config-"));
+    const appPaths = createAppPaths(homeDir);
+
+    await writeJsonFile(appPaths.configFile, {
+      meta: {
+        version: 1
+      },
+      common: {
+        npm: {
+          registry: "not-a-url"
+        }
+      },
+      profiles: {
+        "CJY-WORK": {
+          npm: {
+            alwaysAuth: true
+          }
+        }
+      }
+    });
+    await writeJsonFile(appPaths.stateFile, {
+      activeProfile: "MISSING"
+    });
+
+    const result = await runDoctor({
+      homeDir,
+      commandExists: async () => true
+    });
+
+    expect(result.status).toBe("error");
+    expect(result.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "config-readable", status: "ok" }),
+        expect.objectContaining({ name: "state-active-profile", status: "error" }),
+        expect.objectContaining({ name: "registry-url-valid", status: "error" }),
+        expect.objectContaining({ name: "auth-token-present", status: "warning" })
       ])
     );
   });

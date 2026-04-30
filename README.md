@@ -34,6 +34,27 @@ pkg-switch restore <backupId>
 
 当前 CLI 已接入核心服务。`profile show` 默认脱敏 token。
 
+## 缓存清理
+
+切换完成并成功写入 rc 文件后，工具会根据 `defaults.clearCacheOnSwitch` 和 `defaults.cacheCleanMode` 决定是否清理缓存。
+
+- `smart`：按写入目标执行安全命令，`npm cache clean --force`、`pnpm store prune`、`yarn cache clean`
+- `none`：跳过缓存清理
+- `full`：当前不会执行目录级删除，仅返回 warning，避免误删用户自管缓存目录
+
+缓存清理失败不会回滚已写入的 `.npmrc` / `.yarnrc.yml`，但本次切换状态会记录为 `warning`。
+
+## doctor 检查范围
+
+`pkg-switch doctor` 当前会检查：
+
+- `%USERPROFILE%\.pkg-switch` 是否可写
+- `config.json` 是否可读
+- `state.json` 中的 `activeProfile` 是否存在于配置
+- 各 profile 合并后的 registry URL 是否合法
+- `alwaysAuth=true` 时是否缺少对应 token
+- `npm` / `pnpm` / `yarn` 命令是否可用
+
 当前仓库状态：
 
 - 已完成设计规格
@@ -46,8 +67,10 @@ pkg-switch restore <backupId>
 - 已完成 `.npmrc` 与 `.yarnrc.yml` 渲染
 - 已完成备份、恢复、切换事务与写入失败回滚
 - 已完成 `current`、`doctor`、`restore`、`profile list/show` 服务基础和命令接入
+- 已完成 `smart` / `none` / 安全拒绝 `full` 的缓存清理编排，并接入切换 warning 状态
+- 已完成更完整的 doctor 配置、状态、registry 与鉴权一致性检查
 - 已完成示例配置、样例输出与 CLI 使用说明
-- 下一步：整理提交或继续补充缓存清理与更完整诊断
+- 下一步：运行全量验证后整理提交
 
 文档入口：
 

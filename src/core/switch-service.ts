@@ -2,6 +2,8 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { resolveProfileConfig } from "./config-validate.js";
+import { cleanCaches } from "../managers/cache-cleaner.js";
+import type { CacheCleanResult, CleanCachesInput } from "../managers/cache-cleaner.js";
 import { renderNpmrc } from "../managers/npmrc-renderer.js";
 import { renderYarnrc } from "../managers/yarnrc-renderer.js";
 import { SwitchError } from "../shared/errors.js";
@@ -21,10 +23,12 @@ export interface SwitchProfileResult {
   profileName: string;
   backupId?: string;
   writeTargets: WriteTarget[];
+  cacheClean?: CacheCleanResult;
 }
 
 export interface SwitchProfileDependencies {
   writeTextFile?: (filePath: string, content: string) => Promise<void>;
+  runCacheCommand?: CleanCachesInput["runCommand"];
 }
 
 interface TargetFile {
@@ -61,13 +65,18 @@ function createTargetFiles(homeDir: string, targets: WriteTarget[], npmrc: strin
   return targetFiles;
 }
 
-function createState(profileName: string, backupId: string | undefined, writeTargets: WriteTarget[]): PkgSwitchState {
+function createState(
+  profileName: string,
+  backupId: string | undefined,
+  writeTargets: WriteTarget[],
+  status: SwitchProfileResult["status"]
+): PkgSwitchState {
   return {
     activeProfile: profileName,
     lastSwitchedAt: new Date().toISOString(),
     lastBackupId: backupId,
     lastWriteTargets: writeTargets,
-    lastSwitchStatus: "success"
+    lastSwitchStatus: status
   };
 }
 
@@ -113,12 +122,23 @@ export async function switchProfile(
     });
   }
 
-  await writeJsonFile(appPaths.stateFile, createState(input.profileName, backupId, writeTargets));
+  const shouldCleanCache = !input.skipCacheClean && (config.defaults?.clearCacheOnSwitch ?? false);
+  const cacheClean = shouldCleanCache
+    ? await cleanCaches({
+        mode: config.defaults?.cacheCleanMode ?? "smart",
+        targets: writeTargets,
+        runCommand: dependencies.runCacheCommand
+      })
+    : undefined;
+  const status: SwitchProfileResult["status"] = cacheClean?.status === "warning" ? "warning" : "success";
+
+  await writeJsonFile(appPaths.stateFile, createState(input.profileName, backupId, writeTargets, status));
 
   return {
-    status: "success",
+    status,
     profileName: input.profileName,
     backupId,
-    writeTargets
+    writeTargets,
+    cacheClean
   };
 }

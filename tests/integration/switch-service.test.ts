@@ -82,4 +82,47 @@ describe("switchProfile", () => {
       "npmRegistryServer: https://old.example.com/"
     );
   });
+
+  it("缓存清理失败时不应回滚 rc 文件，但应把切换标记为 warning", async () => {
+    homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-cache-warning-"));
+    const appPaths = createAppPaths(homeDir);
+
+    await writeJsonFile(appPaths.configFile, {
+      meta: {
+        version: 1
+      },
+      defaults: {
+        writeTargets: ["npm"],
+        backupBeforeWrite: true,
+        clearCacheOnSwitch: true,
+        cacheCleanMode: "smart"
+      },
+      profiles: {
+        "CJY-WORK": {
+          npm: {
+            registry: "https://nexus.example.com/repository/npm-group/"
+          }
+        }
+      }
+    });
+    await writeFile(path.join(homeDir, ".npmrc"), "registry=https://old.example.com/\n", "utf8");
+
+    const result = await switchProfile(
+      { homeDir, profileName: "CJY-WORK" },
+      {
+        runCacheCommand: async () => {
+          throw new Error("cache clean failed");
+        }
+      }
+    );
+
+    const npmrc = await readFile(path.join(homeDir, ".npmrc"), "utf8");
+    const state = await readJsonFile<PkgSwitchState>(appPaths.stateFile);
+
+    expect(result.status).toBe("warning");
+    expect(result.cacheClean?.status).toBe("warning");
+    expect(npmrc).toContain("registry=https://nexus.example.com/repository/npm-group/");
+    expect(state.activeProfile).toBe("CJY-WORK");
+    expect(state.lastSwitchStatus).toBe("warning");
+  });
 });

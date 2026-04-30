@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22、TypeScript 5、pnpm、Vitest、cac、yaml
 
-**Current Progress (2026-04-30):** Task 1 已完成。Task 2 到 Task 9 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
+**Current Progress (2026-04-30):** Task 1 已完成。Task 2 到 Task 10 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
 
 ---
 
@@ -735,4 +735,54 @@ Expected: PASS
 ```bash
 git add src/cli.ts src/core/profile-service.ts tests/unit/profile-service.test.ts
 git commit -m "feat: add profile list and show commands"
+```
+
+### Task 10: 补齐缓存清理与更完整 doctor
+
+**Files:**
+- Create: `src/managers/cache-cleaner.ts`
+- Modify: `src/core/switch-service.ts`
+- Modify: `src/core/doctor-service.ts`
+- Modify: `README.md`
+- Test: `tests/unit/cache-cleaner.test.ts`
+- Test: `tests/unit/doctor-service.test.ts`
+- Test: `tests/integration/switch-service.test.ts`
+
+- [x] **Step 1: 写失败测试，覆盖缓存清理命令编排**
+
+`smart` 模式应按目标执行：
+
+- `npm cache clean --force`
+- `pnpm store prune`
+- `yarn cache clean`
+
+`none` 模式不执行命令；命令失败返回 warning，不抛致命异常。
+
+- [x] **Step 2: 写失败测试，覆盖 switch 缓存清理 warning**
+
+当 rc 文件已写入但缓存清理失败时，不回滚 `.npmrc` / `.yarnrc.yml`，并将返回结果和 `state.lastSwitchStatus` 标记为 `warning`。
+
+- [x] **Step 3: 写失败测试，覆盖 doctor 配置诊断**
+
+`doctor` 应检查：
+
+- `config.json` 可读性
+- `state.activeProfile` 是否存在于 profiles
+- registry URL 是否合法
+- `alwaysAuth=true` 时是否缺少 token
+
+- [x] **Step 4: 实现缓存清理 manager 并接入切换事务**
+
+`full` 模式当前不执行目录级删除，仅返回 unsupported warning，避免误删用户缓存目录。
+
+- [x] **Step 5: 实现 doctor 配置、状态、registry 与鉴权一致性检查**
+
+保留原有工具目录写权限与 `npm` / `pnpm` / `yarn` 命令可用性检查。
+
+- [x] **Step 6: 更新 README 并执行验证**
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
 ```
