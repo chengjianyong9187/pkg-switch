@@ -87,13 +87,13 @@ describe("cli actions", () => {
     await runCli(["switch", "CJY-WORK"], { homeDir: preparedHome });
     await runCli(["current"], { homeDir: preparedHome });
 
+    expect(errorSpy).not.toHaveBeenCalled();
     const npmrc = await readFile(path.join(preparedHome, ".npmrc"), "utf8");
     const output = loggedText();
 
     expect(npmrc).toContain("registry=https://nexus.example.com/repository/npm-group/");
     expect(output).toContain("Switched to CJY-WORK");
     expect(output).toContain("Active profile: CJY-WORK");
-    expect(errorSpy).not.toHaveBeenCalled();
   });
 
   it("doctor 应输出诊断摘要", async () => {
@@ -108,5 +108,75 @@ describe("cli actions", () => {
     expect(output).toContain("Doctor status: warning");
     expect(output).toContain("yarn-command: warning");
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("switch --cache-clean 应按单次指定模式执行缓存清理", async () => {
+    const preparedHome = await prepareHome();
+    const commands: Array<{ command: string; args: string[] }> = [];
+
+    await runCli(["switch", "CJY-WORK", "--cache-clean", "smart"], {
+      homeDir: preparedHome,
+      runCacheCommand: async (command, args) => {
+        commands.push({ command, args });
+      }
+    });
+
+    expect(commands).toEqual([
+      { command: "npm", args: ["cache", "clean", "--force"] },
+      { command: "yarn", args: ["cache", "clean"] }
+    ]);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("switch --no-cache-clean 应跳过配置默认启用的缓存清理", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+
+    await writeJsonFile(appPaths.configFile, {
+      defaults: {
+        writeTargets: ["npm"],
+        backupBeforeWrite: false,
+        clearCacheOnSwitch: true,
+        cacheCleanMode: "smart"
+      },
+      profiles: {
+        "CJY-WORK": {
+          npm: {
+            registry: "https://nexus.example.com/repository/npm-group/"
+          }
+        }
+      }
+    });
+
+    await runCli(["switch", "CJY-WORK", "--no-cache-clean"], {
+      homeDir: preparedHome,
+      runCacheCommand: async () => {
+        throw new Error("cache clean should not run");
+      }
+    });
+
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("switch --cache-clean 非法模式应设置失败退出码且不写入 rc 文件", async () => {
+    const preparedHome = await prepareHome();
+
+    await runCli(["switch", "CJY-WORK", "--cache-clean", "invalid"], { homeDir: preparedHome });
+
+    const errorOutput = errorSpy.mock.calls.map((call) => call.join(" ")).join("\n");
+    expect(errorOutput).toContain("Invalid cache clean mode: invalid");
+    await expect(readFile(path.join(preparedHome, ".npmrc"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("switch --cache-clean 缺少模式时应设置失败退出码且不写入 rc 文件", async () => {
+    const preparedHome = await prepareHome();
+
+    await runCli(["switch", "CJY-WORK", "--cache-clean"], { homeDir: preparedHome });
+
+    const errorOutput = errorSpy.mock.calls.map((call) => call.join(" ")).join("\n");
+    expect(errorOutput).toContain("cache clean mode is required");
+    await expect(readFile(path.join(preparedHome, ".npmrc"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    expect(process.exitCode).toBe(1);
   });
 });

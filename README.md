@@ -25,6 +25,8 @@ pnpm build
 
 ```bash
 pkg-switch switch CJY-WORK
+pkg-switch switch CJY-WORK --no-cache-clean
+pkg-switch switch CJY-WORK --cache-clean smart
 pkg-switch current
 pkg-switch profile list
 pkg-switch profile show CJY-WORK
@@ -41,6 +43,8 @@ pkg-switch restore <backupId>
 - `smart`：按写入目标执行安全命令，`npm cache clean --force`、`pnpm store prune`、`yarn cache clean`
 - `none`：跳过缓存清理
 - `full`：当前不会执行目录级删除，仅返回 warning，避免误删用户自管缓存目录
+
+单次切换可用 `--no-cache-clean` 跳过缓存清理，或用 `--cache-clean smart|full|none` 覆盖配置默认值。`--cache-clean` 缺少模式或模式非法时会直接失败，且不会写入用户 rc 文件。
 
 缓存清理失败不会回滚已写入的 `.npmrc` / `.yarnrc.yml`，但本次切换状态会记录为 `warning`。
 
@@ -68,9 +72,10 @@ pkg-switch restore <backupId>
 - 已完成备份、恢复、切换事务与写入失败回滚
 - 已完成 `current`、`doctor`、`restore`、`profile list/show` 服务基础和命令接入
 - 已完成 `smart` / `none` / 安全拒绝 `full` 的缓存清理编排，并接入切换 warning 状态
+- 已完成 `switch --no-cache-clean` 与 `switch --cache-clean smart|full|none` 单次覆盖参数
 - 已完成更完整的 doctor 配置、状态、registry 与鉴权一致性检查
 - 已完成示例配置、样例输出与 CLI 使用说明
-- 下一步：运行全量验证后整理提交
+- 下一步：基于本机真实配置试运行 `doctor` / `switch`，或继续补齐 `backup list`、`profile add/remove`
 
 文档入口：
 

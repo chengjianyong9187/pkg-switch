@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22、TypeScript 5、pnpm、Vitest、cac、yaml
 
-**Current Progress (2026-04-30):** Task 1 已完成。Task 2 到 Task 10 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
+**Current Progress (2026-04-30):** Task 1 已完成。Task 2 到 Task 11 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
 
 ---
 
@@ -780,6 +780,41 @@ git commit -m "feat: add profile list and show commands"
 保留原有工具目录写权限与 `npm` / `pnpm` / `yarn` 命令可用性检查。
 
 - [x] **Step 6: 更新 README 并执行验证**
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+### Task 11: 补齐 switch 缓存清理 CLI 参数
+
+**Files:**
+- Modify: `src/cli.ts`
+- Modify: `src/index.ts`
+- Modify: `src/core/switch-service.ts`
+- Modify: `README.md`
+- Test: `tests/integration/cli-actions.test.ts`
+- Test: `tests/integration/switch-service.test.ts`
+
+- [x] **Step 1: 写失败测试，覆盖 core 单次覆盖缓存清理模式**
+
+`cacheCleanModeOverride: "smart"` 应允许在 `clearCacheOnSwitch=false` 的配置下单次启用清理，并覆盖配置中的 `cacheCleanMode`。
+
+- [x] **Step 2: 写失败测试，覆盖 CLI 参数**
+
+覆盖以下命令行为：
+
+- `pkg-switch switch CJY-WORK --cache-clean smart`：执行指定模式清理
+- `pkg-switch switch CJY-WORK --no-cache-clean`：跳过配置默认启用的缓存清理
+- `pkg-switch switch CJY-WORK --cache-clean invalid`：失败且不写入 rc 文件
+- `pkg-switch switch CJY-WORK --cache-clean`：失败且不写入 rc 文件
+
+- [x] **Step 3: 实现 switch 输入覆盖与 CLI 参数解析**
+
+`--cache-clean [mode]` 使用可选值注册，避免与 `--no-cache-clean` 在 CAC 中共享 option key 后触发缺值误判；实际缺值由 CLI 基于原始 `argv` 显式校验。
+
+- [x] **Step 4: 更新 README 并执行验证**
 
 ```bash
 pnpm lint

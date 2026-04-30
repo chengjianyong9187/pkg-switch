@@ -125,4 +125,42 @@ describe("switchProfile", () => {
     expect(state.activeProfile).toBe("CJY-WORK");
     expect(state.lastSwitchStatus).toBe("warning");
   });
+
+  it("cacheCleanModeOverride 应允许单次启用并覆盖配置中的缓存清理模式", async () => {
+    homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-cache-override-"));
+    const appPaths = createAppPaths(homeDir);
+    const commands: Array<{ command: string; args: string[] }> = [];
+
+    await writeJsonFile(appPaths.configFile, {
+      meta: {
+        version: 1
+      },
+      defaults: {
+        writeTargets: ["npm"],
+        backupBeforeWrite: false,
+        clearCacheOnSwitch: false,
+        cacheCleanMode: "none"
+      },
+      profiles: {
+        "CJY-WORK": {
+          npm: {
+            registry: "https://nexus.example.com/repository/npm-group/"
+          }
+        }
+      }
+    });
+
+    const result = await switchProfile(
+      { homeDir, profileName: "CJY-WORK", cacheCleanModeOverride: "smart" },
+      {
+        runCacheCommand: async (command, args) => {
+          commands.push({ command, args });
+        }
+      }
+    );
+
+    expect(result.status).toBe("success");
+    expect(result.cacheClean?.mode).toBe("smart");
+    expect(commands).toEqual([{ command: "npm", args: ["cache", "clean", "--force"] }]);
+  });
 });

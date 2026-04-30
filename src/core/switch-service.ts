@@ -7,7 +7,7 @@ import type { CacheCleanResult, CleanCachesInput } from "../managers/cache-clean
 import { renderNpmrc } from "../managers/npmrc-renderer.js";
 import { renderYarnrc } from "../managers/yarnrc-renderer.js";
 import { SwitchError } from "../shared/errors.js";
-import type { PkgSwitchConfig, PkgSwitchState, WriteTarget } from "../shared/types.js";
+import type { CacheCleanMode, PkgSwitchConfig, PkgSwitchState, WriteTarget } from "../shared/types.js";
 import { createAppPaths } from "../storage/app-paths.js";
 import { createBackup, restoreBackup } from "../storage/backup-repo.js";
 import { readJsonFile, writeJsonFile } from "../storage/config-repo.js";
@@ -16,6 +16,7 @@ export interface SwitchProfileInput {
   homeDir: string;
   profileName: string;
   skipCacheClean?: boolean;
+  cacheCleanModeOverride?: CacheCleanMode;
 }
 
 export interface SwitchProfileResult {
@@ -84,6 +85,19 @@ async function defaultWriteTextFile(filePath: string, content: string): Promise<
   await writeFile(filePath, content, "utf8");
 }
 
+function shouldCleanCache(input: SwitchProfileInput, config: PkgSwitchConfig): boolean {
+  if (input.skipCacheClean) {
+    return false;
+  }
+
+  // 显式 CLI 覆盖优先于配置默认值，便于单次试运行不同清理策略。
+  if (input.cacheCleanModeOverride) {
+    return true;
+  }
+
+  return config.defaults?.clearCacheOnSwitch ?? false;
+}
+
 export async function switchProfile(
   input: SwitchProfileInput,
   dependencies: SwitchProfileDependencies = {}
@@ -122,10 +136,10 @@ export async function switchProfile(
     });
   }
 
-  const shouldCleanCache = !input.skipCacheClean && (config.defaults?.clearCacheOnSwitch ?? false);
-  const cacheClean = shouldCleanCache
+  const cacheCleanMode = input.cacheCleanModeOverride ?? config.defaults?.cacheCleanMode ?? "smart";
+  const cacheClean = shouldCleanCache(input, config)
     ? await cleanCaches({
-        mode: config.defaults?.cacheCleanMode ?? "smart",
+        mode: cacheCleanMode,
         targets: writeTargets,
         runCommand: dependencies.runCacheCommand
       })
