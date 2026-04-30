@@ -1,0 +1,7 @@
+nodeLinker: node-modules
+npmRegistryServer: https://nexus.example.com/repository/npm-group/
+npmAlwaysAuth: true
+npmAuthToken: plain-text-token
+npmScopes:
+  company:
+    npmRegistryServer: https://nexus.example.com/repository/npm-group/

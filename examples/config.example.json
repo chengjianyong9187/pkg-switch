@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "version": 1,
+    "updatedAt": "2026-04-30T10:00:00+08:00"
+  },
+  "defaults": {
+    "writeTargets": ["npm", "yarn"],
+    "backupBeforeWrite": true,
+    "clearCacheOnSwitch": true,
+    "cacheCleanMode": "smart"
+  },
+  "common": {
+    "npm": {
+      "registry": "https://registry.npmmirror.com/",
+      "cache": "D:/DevCaches/npm-cache",
+      "strictSsl": true
+    },
+    "pnpm": {
+      "storeDir": "D:/DevCaches/pnpm-store"
+    },
+    "yarn": {
+      "nodeLinker": "node-modules"
+    }
+  },
+  "profiles": {
+    "CJY-WORK": {
+      "npm": {
+        "registry": "https://nexus.example.com/repository/npm-group/",
+        "alwaysAuth": true,
+        "authToken": "plain-text-token"
+      },
+      "scopes": {
+        "@company": {
+          "registry": "https://nexus.example.com/repository/npm-group/"
+        }
+      }
+    },
+    "CJY-PERSONAL": {
+      "npm": {
+        "alwaysAuth": false,
+        "authToken": null
+      },
+      "scopes": {
+        "@company": null
+      }
+    }
+  }
+}
