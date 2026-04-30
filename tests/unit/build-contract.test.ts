@@ -10,7 +10,7 @@ const shellPath = process.platform === "win32" ? process.env.ComSpec ?? "cmd.exe
 const shellArgs = process.platform === "win32" ? ["/d", "/s", "/c", "pnpm build"] : ["-lc", "pnpm build"];
 
 describe("build contract", () => {
-  it("应生成与 bin 匹配的 dist/index.js，且不产出 dist/tests", () => {
+  it("应生成与 bin 匹配且带 shebang 的 dist/index.js，且不产出 dist/tests", () => {
     // 每次测试前先清理旧产物，避免历史构建结果掩盖契约问题。
     rmSync(distDir, { force: true, recursive: true });
 
@@ -23,8 +23,10 @@ describe("build contract", () => {
       bin: Record<string, string>;
     };
     const binEntry = path.join(projectRoot, packageJson.bin["pkg-switch"]);
+    const binContent = readFileSync(binEntry, "utf8");
 
     expect(existsSync(binEntry)).toBe(true);
+    expect(binContent.startsWith("#!/usr/bin/env node\n")).toBe(true);
     expect(existsSync(path.join(distDir, "tests"))).toBe(false);
   });
 });

@@ -8,7 +8,7 @@
     "pkg-switch": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/ensure-bin-shebang.mjs",
     "test": "vitest run",
     "lint": "tsc --noEmit -p tsconfig.json"
   },
