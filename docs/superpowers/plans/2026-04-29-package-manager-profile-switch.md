@@ -8,6 +8,8 @@
 
 **Tech Stack:** Node.js 22、TypeScript 5、pnpm、Vitest、cac、yaml
 
+**Current Progress (2026-04-30):** Task 1 已完成。Task 2 到 Task 9 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
+
 ---
 
 ## File Structure
@@ -60,8 +62,10 @@
 - Create: `src/cli.ts`
 - Create: `src/index.ts`
 - Test: `tests/unit/cli-entry.test.ts`
+- Test: `tests/unit/cli-runtime.test.ts`
+- Test: `tests/unit/build-contract.test.ts`
 
-- [ ] **Step 1: 写失败测试，定义 CLI 基本入口行为**
+- [x] **Step 1: 写失败测试，定义 CLI 基本入口行为**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -78,12 +82,12 @@ describe("createCli", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/unit/cli-entry.test.ts`
 Expected: FAIL with `Cannot find module '../../src/cli'` or `createCli is not a function`
 
-- [ ] **Step 3: 写最小实现与工程脚手架**
+- [x] **Step 3: 写最小实现与工程脚手架**
 
 ```ts
 // src/cli.ts
@@ -126,12 +130,12 @@ export function createCli() {
 }
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/unit/cli-entry.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交骨架**
+- [x] **Step 5: 提交骨架**
 
 ```bash
 git add package.json tsconfig.json vitest.config.ts src tests
@@ -147,7 +151,7 @@ git commit -m "chore: scaffold pkg-switch cli"
 - Test: `tests/unit/config-merge.test.ts`
 - Test: `tests/unit/mask.test.ts`
 
-- [ ] **Step 1: 写失败测试，覆盖 profile 覆盖和 null 移除继承**
+- [x] **Step 1: 写失败测试，覆盖 profile 覆盖和 null 移除继承**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -173,12 +177,12 @@ describe("mergeProfileConfig", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/unit/config-merge.test.ts`
 Expected: FAIL with `Cannot find module '../../src/core/config-merge'`
 
-- [ ] **Step 3: 写最小实现和脱敏函数**
+- [x] **Step 3: 写最小实现和脱敏函数**
 
 ```ts
 // src/core/config-merge.ts
@@ -218,12 +222,12 @@ export function maskSecret(value: string | null | undefined): string {
 }
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/unit/config-merge.test.ts tests/unit/mask.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交配置核心**
+- [x] **Step 5: 提交配置核心**
 
 ```bash
 git add src/shared src/core tests/unit
@@ -237,7 +241,7 @@ git commit -m "feat: add config merge and masking utilities"
 - Create: `src/storage/config-repo.ts`
 - Test: `tests/unit/config-repo.test.ts`
 
-- [ ] **Step 1: 写失败测试，覆盖用户目录路径和状态文件读取**
+- [x] **Step 1: 写失败测试，覆盖用户目录路径和状态文件读取**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -254,12 +258,12 @@ describe("createAppPaths", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/unit/config-repo.test.ts`
 Expected: FAIL with `Cannot find module '../../src/storage/app-paths'`
 
-- [ ] **Step 3: 写最小实现**
+- [x] **Step 3: 写最小实现**
 
 ```ts
 // src/storage/app-paths.ts
@@ -288,12 +292,12 @@ export async function readJsonFile<T>(filePath: string): Promise<T> {
 }
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/unit/config-repo.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交存储基础**
+- [x] **Step 5: 提交存储基础**
 
 ```bash
 git add src/storage tests/unit
@@ -308,7 +312,7 @@ git commit -m "feat: add config repository primitives"
 - Test: `tests/unit/npmrc-renderer.test.ts`
 - Test: `tests/unit/yarnrc-renderer.test.ts`
 
-- [ ] **Step 1: 写失败测试，定义 `.npmrc` 托管输出**
+- [x] **Step 1: 写失败测试，定义 `.npmrc` 托管输出**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -329,12 +333,12 @@ describe("renderNpmrc", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/unit/npmrc-renderer.test.ts`
 Expected: FAIL with `Cannot find module '../../src/managers/npmrc-renderer'`
 
-- [ ] **Step 3: 写最小渲染实现**
+- [x] **Step 3: 写最小渲染实现**
 
 ```ts
 // src/managers/npmrc-renderer.ts
@@ -365,12 +369,12 @@ export function renderYarnrc(config: Record<string, unknown>) {
 }
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/unit/npmrc-renderer.test.ts tests/unit/yarnrc-renderer.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交渲染器**
+- [x] **Step 5: 提交渲染器**
 
 ```bash
 git add src/managers tests/unit
@@ -385,7 +389,7 @@ git commit -m "feat: add package manager config renderers"
 - Create: `src/core/switch-service.ts`
 - Test: `tests/integration/switch-service.test.ts`
 
-- [ ] **Step 1: 写失败集成测试，覆盖成功切换与备份创建**
+- [x] **Step 1: 写失败集成测试，覆盖成功切换与备份创建**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -408,12 +412,12 @@ describe("switchProfile", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/integration/switch-service.test.ts`
 Expected: FAIL with `Cannot find module '../../src/core/switch-service'`
 
-- [ ] **Step 3: 写最小事务实现**
+- [x] **Step 3: 写最小事务实现**
 
 ```ts
 // src/core/switch-service.ts
@@ -435,12 +439,12 @@ export async function switchProfile(input: { homeDir: string; profileName: strin
 }
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/integration/switch-service.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交切换事务**
+- [x] **Step 5: 提交切换事务**
 
 ```bash
 git add src/core src/storage tests/integration
@@ -454,7 +458,7 @@ git commit -m "feat: add transactional profile switching"
 - Modify: `src/storage/backup-repo.ts`
 - Test: `tests/integration/switch-rollback.test.ts`
 
-- [ ] **Step 1: 写失败集成测试，覆盖第二个目标文件写入失败后的回滚**
+- [x] **Step 1: 写失败集成测试，覆盖第二个目标文件写入失败后的回滚**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -467,12 +471,12 @@ describe("switchProfile rollback", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/integration/switch-rollback.test.ts`
 Expected: FAIL with `rolledBack` missing or rollback assertion mismatch
 
-- [ ] **Step 3: 增加 try/catch 回滚实现**
+- [x] **Step 3: 增加 try/catch 回滚实现**
 
 ```ts
 try {
@@ -486,12 +490,12 @@ try {
 }
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/integration/switch-rollback.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交回滚能力**
+- [x] **Step 5: 提交回滚能力**
 
 ```bash
 git add src/core/switch-service.ts src/storage/backup-repo.ts tests/integration
@@ -506,7 +510,7 @@ git commit -m "feat: add rollback for failed writes"
 - Test: `tests/unit/doctor-service.test.ts`
 - Test: `tests/unit/restore-command.test.ts`
 
-- [ ] **Step 1: 写失败测试，覆盖 doctor 结果和 restore 命令注册**
+- [x] **Step 1: 写失败测试，覆盖 doctor 结果和 restore 命令注册**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -527,12 +531,12 @@ describe("runDoctor", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/unit/doctor-service.test.ts tests/unit/restore-command.test.ts`
 Expected: FAIL with missing `runDoctor` or missing `restore <backupId>` command
 
-- [ ] **Step 3: 写最小实现**
+- [x] **Step 3: 写最小实现**
 
 ```ts
 // src/core/doctor-service.ts
@@ -554,12 +558,12 @@ cli.command("doctor", "执行环境诊断");
 cli.command("restore <backupId>", "恢复指定备份");
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/unit/doctor-service.test.ts tests/unit/restore-command.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交运维命令**
+- [x] **Step 5: 提交运维命令**
 
 ```bash
 git add src/cli.ts src/core tests/unit
@@ -574,7 +578,7 @@ git commit -m "feat: add doctor current and restore commands"
 - Create: `examples/output.npmrc`
 - Create: `examples/output.yarnrc.yml`
 
-- [ ] **Step 1: 先写失败测试，验证示例配置可被读取并切换**
+- [x] **Step 1: 先写失败测试，验证示例配置可被读取并切换**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -592,12 +596,12 @@ describe("config example", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/unit/config-example.test.ts`
 Expected: FAIL with `ENOENT: no such file or directory`
 
-- [ ] **Step 3: 补 README、示例配置与样例输出**
+- [x] **Step 3: 补 README、示例配置与样例输出**
 
 ```json
 {
@@ -633,12 +637,12 @@ Expected: FAIL with `ENOENT: no such file or directory`
 }
 ```
 
-- [ ] **Step 4: 执行全量验证**
+- [x] **Step 4: 执行全量验证**
 
 Run: `pnpm install && pnpm lint && pnpm test && pnpm build`
 Expected: 全部通过，输出无未处理错误
 
-- [ ] **Step 5: 提交文档与示例**
+- [x] **Step 5: 提交文档与示例**
 
 ```bash
 git add README.md examples tests/unit
@@ -660,7 +664,7 @@ git commit -m "docs: add usage guide and sample configs"
 - Create: `src/core/profile-service.ts`
 - Test: `tests/unit/profile-service.test.ts`
 
-- [ ] **Step 1: 写失败测试，覆盖 profile 列表与脱敏展示**
+- [x] **Step 1: 写失败测试，覆盖 profile 列表与脱敏展示**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -690,12 +694,12 @@ describe("profile service", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run: `pnpm vitest run tests/unit/profile-service.test.ts`
 Expected: FAIL with missing `listProfiles` or `showProfile`
 
-- [ ] **Step 3: 写最小实现并注册命令**
+- [x] **Step 3: 写最小实现并注册命令**
 
 ```ts
 // src/core/profile-service.ts
@@ -721,12 +725,12 @@ cli.command("profile list", "列出全部 profile");
 cli.command("profile show <name>", "显示指定 profile 的合并结果");
 ```
 
-- [ ] **Step 4: 再跑测试并确认通过**
+- [x] **Step 4: 再跑测试并确认通过**
 
 Run: `pnpm vitest run tests/unit/profile-service.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交补齐命令**
+- [x] **Step 5: 提交补齐命令**
 
 ```bash
 git add src/cli.ts src/core/profile-service.ts tests/unit/profile-service.test.ts
