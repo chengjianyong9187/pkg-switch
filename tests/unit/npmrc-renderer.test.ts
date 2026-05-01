@@ -29,4 +29,21 @@ describe("renderNpmrc", () => {
     expect(output).not.toContain("undefined");
     expect(output.endsWith("\n")).toBe(true);
   });
+
+  it("应输出 npm extraConfig 中的自定义键", () => {
+    const output = renderNpmrc({
+      npm: {
+        registry: "https://registry.npmmirror.com/",
+        extraConfig: {
+          "//nexus.example.com/repository/npm-public/:_auth": "\"base64-token\"",
+          electron_mirror: "https://cdn.npmmirror.com/binaries/electron/",
+          msvs_version: "2022"
+        }
+      }
+    });
+
+    expect(output).toContain("//nexus.example.com/repository/npm-public/:_auth=\"base64-token\"");
+    expect(output).toContain("electron_mirror=https://cdn.npmmirror.com/binaries/electron/");
+    expect(output).toContain("msvs_version=2022");
+  });
 });

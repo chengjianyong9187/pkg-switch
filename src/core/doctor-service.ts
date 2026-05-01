@@ -174,8 +174,11 @@ function checkRegistryUrls(config: PkgSwitchConfig | undefined): DoctorCheck {
 
 function collectMissingAuthTokens(profileName: string, config: ResolvedProfileConfig): string[] {
   const warnings: string[] = [];
+  const hasNpmExtraAuth = Object.entries(config.npm?.extraConfig ?? {}).some(
+    ([key, value]) => /:(_authToken|_auth)$/i.test(key) && Boolean(value)
+  );
 
-  if (config.npm?.alwaysAuth === true && !config.npm.authToken) {
+  if (config.npm?.alwaysAuth === true && !config.npm.authToken && !hasNpmExtraAuth) {
     warnings.push(`${profileName}: npm.alwaysAuth requires npm.authToken`);
   }
 

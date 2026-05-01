@@ -9,6 +9,7 @@ export interface NpmConfig {
   strictSsl?: boolean;
   alwaysAuth?: boolean;
   authToken?: string;
+  extraConfig?: Record<string, string | boolean>;
 }
 
 export interface PnpmConfig {

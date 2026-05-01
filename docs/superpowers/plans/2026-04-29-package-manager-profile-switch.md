@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22、TypeScript 5、pnpm、Vitest、cac、yaml
 
-**Current Progress (2026-05-01):** Task 1 已完成。Task 2 到 Task 13 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
+**Current Progress (2026-05-01):** Task 1 已完成。Task 2 到 Task 13 已完成测试、实现、本地验证与功能分组提交。当前已额外补齐 `npm.extraConfig`，用于承载既有 `.npmrc` 中的自定义键和 host 级鉴权配置。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
 
 ---
 
@@ -893,6 +893,38 @@ pnpm build
 `profile-service` 只处理配置对象和边界校验；`src/cli.ts` 负责读取 `config.json`、可选读取 `state.json`，并通过 `writeJsonFile` 写回配置。
 
 - [x] **Step 4: 更新 README 并执行验证**
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+### Task 14: 支持 npm extraConfig 迁移既有 `.npmrc`
+
+**Files:**
+- Modify: `src/shared/types.ts`
+- Modify: `src/managers/npmrc-renderer.ts`
+- Modify: `src/core/profile-service.ts`
+- Modify: `src/core/doctor-service.ts`
+- Modify: `README.md`
+- Test: `tests/unit/npmrc-renderer.test.ts`
+- Test: `tests/unit/profile-service.test.ts`
+- Test: `tests/unit/doctor-service.test.ts`
+
+- [x] **Step 1: 写失败测试，覆盖自定义 npmrc 键渲染**
+
+`npm.extraConfig` 应能原样输出 `prefix`、镜像地址、构建工具路径、host 级 `_auth/_authToken` 等配置。
+
+- [x] **Step 2: 写失败测试，覆盖敏感字段脱敏**
+
+`profile show` 应对 `npm.extraConfig` 中 key 命中 `token/_auth/password/username/email` 的值脱敏。
+
+- [x] **Step 3: 写失败测试，覆盖 doctor host 级鉴权识别**
+
+当 `alwaysAuth=true` 且 `npm.extraConfig` 存在 host 级 `_auth/_authToken` 时，`doctor` 不应误报缺少 token。
+
+- [x] **Step 4: 实现、更新 README 并执行验证**
 
 ```bash
 pnpm lint

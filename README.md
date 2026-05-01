@@ -21,6 +21,8 @@ pnpm build
 
 可参考 `examples/config.example.json` 创建本机配置。示例中 `authToken` 为占位值，使用前需要替换为真实 token。
 
+从既有 `.npmrc` 迁移时，`prefix`、镜像地址、构建工具路径、host 级 `_auth/_authToken` 等非标准字段可放入 `npm.extraConfig`，切换时会原样渲染为 `.npmrc` 行；`profile show` 会对其中的鉴权字段脱敏。
+
 ## 常用命令
 
 ```bash

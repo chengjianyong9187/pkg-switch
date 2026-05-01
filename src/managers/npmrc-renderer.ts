@@ -13,6 +13,12 @@ function appendStringLine(lines: string[], key: string, value: string | undefine
   }
 }
 
+function appendExtraConfigLines(lines: string[], extraConfig: Record<string, string | boolean> | undefined): void {
+  for (const [key, value] of Object.entries(extraConfig ?? {}).sort(([left], [right]) => left.localeCompare(right))) {
+    lines.push(`${key}=${String(value)}`);
+  }
+}
+
 function appendScopeLines(lines: string[], scopeName: string, scope: ScopeConfig): void {
   appendStringLine(lines, `${scopeName}:registry`, scope.registry);
   appendBooleanLine(lines, `${scopeName}:always-auth`, scope.alwaysAuth);
@@ -29,6 +35,7 @@ export function renderNpmrc(config: ResolvedProfileConfig): string {
     appendBooleanLine(lines, "strict-ssl", npm.strictSsl);
     appendBooleanLine(lines, "always-auth", npm.alwaysAuth);
     appendStringLine(lines, "_authToken", npm.authToken);
+    appendExtraConfigLines(lines, npm.extraConfig);
   }
 
   for (const [scopeName, scope] of Object.entries(config.scopes ?? {}).sort(([left], [right]) => left.localeCompare(right))) {

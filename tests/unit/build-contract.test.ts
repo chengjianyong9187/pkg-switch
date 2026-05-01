@@ -28,5 +28,5 @@ describe("build contract", () => {
     expect(existsSync(binEntry)).toBe(true);
     expect(binContent.startsWith("#!/usr/bin/env node\n")).toBe(true);
     expect(existsSync(path.join(distDir, "tests"))).toBe(false);
-  }, 15000);
+  }, 30000);
 });

@@ -18,10 +18,14 @@ describe("profile service", () => {
     },
     profiles: {
       "CJY-WORK": {
-        npm: {
-          registry: "https://nexus.example.com/repository/npm-group/",
-          authToken: "plain-text-token"
+      npm: {
+        registry: "https://nexus.example.com/repository/npm-group/",
+        authToken: "plain-text-token",
+        extraConfig: {
+          "//nexus.example.com/repository/npm-public/:_auth": "\"base64-secret\"",
+          electron_mirror: "https://cdn.npmmirror.com/binaries/electron/"
         }
+      }
       },
       "CJY-PERSONAL": {
         npm: {
@@ -43,6 +47,8 @@ describe("profile service", () => {
 
     expect(detail.npm?.registry).toBe("https://nexus.example.com/repository/npm-group/");
     expect(detail.npm?.authToken).toBe("pla***ken");
+    expect(detail.npm?.extraConfig?.["//nexus.example.com/repository/npm-public/:_auth"]).toBe("\"ba***et\"");
+    expect(detail.npm?.extraConfig?.electron_mirror).toBe("https://cdn.npmmirror.com/binaries/electron/");
     expect(detail.scopes?.["@company"]?.registry).toBe("https://nexus.example.com/repository/npm-group/");
   });
 

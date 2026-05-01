@@ -76,4 +76,35 @@ describe("runDoctor", () => {
       ])
     );
   });
+
+  it("alwaysAuth 使用 host 级 extraConfig 鉴权时不应误报缺少 token", async () => {
+    homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-doctor-extra-auth-"));
+    const appPaths = createAppPaths(homeDir);
+
+    await writeJsonFile(appPaths.configFile, {
+      meta: {
+        version: 1
+      },
+      profiles: {
+        "CJY-WORK": {
+          npm: {
+            registry: "https://nexus.example.com/repository/npm-public/",
+            alwaysAuth: true,
+            extraConfig: {
+              "//nexus.example.com/repository/npm-public/:_authToken": "plain-text-token"
+            }
+          }
+        }
+      }
+    });
+
+    const result = await runDoctor({
+      homeDir,
+      commandExists: async () => true
+    });
+
+    expect(result.checks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "auth-token-present", status: "ok" })])
+    );
+  });
 });

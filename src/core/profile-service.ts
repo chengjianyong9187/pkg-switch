@@ -14,6 +14,12 @@ function maskResolvedProfile(config: ResolvedProfileConfig): ResolvedProfileConf
     output.npm.authToken = maskSecret(output.npm.authToken);
   }
 
+  for (const [key, value] of Object.entries(output.npm?.extraConfig ?? {})) {
+    if (/(token|_auth|password|passwd|username|email)/i.test(key) && typeof value === "string") {
+      output.npm!.extraConfig![key] = maskSecret(value);
+    }
+  }
+
   if (output.yarn?.npmAuthToken) {
     output.yarn.npmAuthToken = maskSecret(output.yarn.npmAuthToken);
   }
