@@ -5,13 +5,13 @@ import { listProfileBackups } from "./core/backup-service.js";
 import { getCurrentStatus } from "./core/current-service.js";
 import type { DoctorInput } from "./core/doctor-service.js";
 import { runDoctor } from "./core/doctor-service.js";
-import { listProfiles, showProfile } from "./core/profile-service.js";
+import { addProfile, listProfiles, removeProfile, showProfile } from "./core/profile-service.js";
 import { restoreProfileBackup } from "./core/restore-service.js";
 import { switchProfile } from "./core/switch-service.js";
 import type { SwitchProfileDependencies } from "./core/switch-service.js";
-import type { CacheCleanMode, PkgSwitchConfig } from "./shared/types.js";
+import type { CacheCleanMode, PkgSwitchConfig, PkgSwitchState } from "./shared/types.js";
 import { createAppPaths } from "./storage/app-paths.js";
-import { readJsonFile } from "./storage/config-repo.js";
+import { readJsonFile, readOptionalJsonFile, writeJsonFile } from "./storage/config-repo.js";
 
 export interface CliRuntimeOptions {
   homeDir?: string;
@@ -28,6 +28,14 @@ const cacheCleanModes: CacheCleanMode[] = ["smart", "full", "none"];
 
 async function readConfig(homeDir: string): Promise<PkgSwitchConfig> {
   return readJsonFile<PkgSwitchConfig>(createAppPaths(homeDir).configFile);
+}
+
+async function readState(homeDir: string): Promise<PkgSwitchState | undefined> {
+  return readOptionalJsonFile<PkgSwitchState>(createAppPaths(homeDir).stateFile);
+}
+
+async function writeConfig(homeDir: string, config: PkgSwitchConfig): Promise<void> {
+  await writeJsonFile(createAppPaths(homeDir).configFile, config);
 }
 
 function parseCacheCleanMode(value: string): CacheCleanMode {
@@ -148,6 +156,26 @@ export function createCli(options: CliRuntimeOptions = {}) {
       }
 
       console.log(JSON.stringify(showProfile(await readConfig(homeDir), name), null, 2));
+      return;
+    }
+
+    if (action === "add") {
+      if (!name || !name.trim()) {
+        throw new Error("profile name is required");
+      }
+
+      await writeConfig(homeDir, addProfile(await readConfig(homeDir), name));
+      console.log(`Added profile: ${name}`);
+      return;
+    }
+
+    if (action === "remove") {
+      if (!name || !name.trim()) {
+        throw new Error("profile name is required");
+      }
+
+      await writeConfig(homeDir, removeProfile(await readConfig(homeDir), name, await readState(homeDir)));
+      console.log(`Removed profile: ${name}`);
       return;
     }
 

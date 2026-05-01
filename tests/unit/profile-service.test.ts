@@ -1,6 +1,6 @@
 // ts
 import { describe, expect, it } from "vitest";
-import { listProfiles, showProfile } from "../../src/core/profile-service.js";
+import { addProfile, listProfiles, removeProfile, showProfile } from "../../src/core/profile-service.js";
 import type { PkgSwitchConfig } from "../../src/shared/types.js";
 
 describe("profile service", () => {
@@ -55,5 +55,27 @@ describe("profile service", () => {
 
   it("应在 profile 不存在时抛出明确错误", () => {
     expect(() => showProfile(config, "MISSING")).toThrow("Profile not found: MISSING");
+  });
+
+  it("应新增空 profile 且不修改原配置对象", () => {
+    const result = addProfile(config, "CJY-TEST");
+
+    expect(result.profiles["CJY-TEST"]).toEqual({});
+    expect(config.profiles["CJY-TEST"]).toBeUndefined();
+  });
+
+  it("新增已存在 profile 时应抛出明确错误", () => {
+    expect(() => addProfile(config, "CJY-WORK")).toThrow("Profile already exists: CJY-WORK");
+  });
+
+  it("应删除非激活 profile 且不修改原配置对象", () => {
+    const result = removeProfile(config, "CJY-PERSONAL", { activeProfile: "CJY-WORK" });
+
+    expect(result.profiles["CJY-PERSONAL"]).toBeUndefined();
+    expect(config.profiles["CJY-PERSONAL"]).toBeDefined();
+  });
+
+  it("删除当前激活 profile 时应抛出明确错误", () => {
+    expect(() => removeProfile(config, "CJY-WORK", { activeProfile: "CJY-WORK" })).toThrow("Cannot remove active profile: CJY-WORK");
   });
 });

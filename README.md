@@ -30,12 +30,21 @@ pkg-switch switch CJY-WORK --cache-clean smart
 pkg-switch current
 pkg-switch profile list
 pkg-switch profile show CJY-WORK
+pkg-switch profile add CJY-TEST
+pkg-switch profile remove CJY-TEST
 pkg-switch doctor
 pkg-switch backup list
 pkg-switch restore <backupId>
 ```
 
 当前 CLI 已接入核心服务。`profile show` 默认脱敏 token。
+
+## profile 管理
+
+- `profile list`：按名称排序列出全部配置档
+- `profile show <name>`：展示 `common + profile` 合并后的配置，默认脱敏 token
+- `profile add <name>`：新增一个空 profile，已有同名 profile 时失败
+- `profile remove <name>`：删除非激活 profile；如果目标是 `state.json` 中的当前激活 profile，则失败并保持配置不变
 
 ## 缓存清理
 
@@ -80,12 +89,13 @@ pkg-switch restore backup-2026-01-01T00-00-00-000Z
 - 已完成 `.npmrc` 与 `.yarnrc.yml` 渲染
 - 已完成备份、恢复、切换事务与写入失败回滚
 - 已完成 `current`、`doctor`、`restore`、`profile list/show` 服务基础和命令接入
+- 已完成 `profile add/remove` 配置档新增和删除，并保护当前激活 profile 不被删除
 - 已完成 `smart` / `none` / 安全拒绝 `full` 的缓存清理编排，并接入切换 warning 状态
 - 已完成 `switch --no-cache-clean` 与 `switch --cache-clean smart|full|none` 单次覆盖参数
 - 已完成 `backup list` 备份摘要列表，恢复前可直接查看可用 `backupId`
 - 已完成更完整的 doctor 配置、状态、registry 与鉴权一致性检查
 - 已完成示例配置、样例输出与 CLI 使用说明
-- 下一步：基于本机真实配置试运行 `doctor` / `backup list` / `switch`，或继续补齐 `profile add/remove`
+- 下一步：基于本机真实配置试运行 `doctor` / `backup list` / `profile add/remove` / `switch`
 
 文档入口：
 

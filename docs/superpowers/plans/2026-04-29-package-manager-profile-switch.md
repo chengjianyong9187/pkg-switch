@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22、TypeScript 5、pnpm、Vitest、cac、yaml
 
-**Current Progress (2026-05-01):** Task 1 已完成。Task 2 到 Task 12 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
+**Current Progress (2026-05-01):** Task 1 已完成。Task 2 到 Task 13 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
 
 ---
 
@@ -853,6 +853,44 @@ pnpm build
 - [x] **Step 3: 实现存储层列表、core 摘要服务与 CLI 命令**
 
 `storage/backup-repo.ts` 负责读取 manifest，`core/backup-service.ts` 负责映射为 CLI 摘要，`src/cli.ts` 注册 `backup <action>` 并处理 `list`。
+
+- [x] **Step 4: 更新 README 并执行验证**
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+### Task 13: 补齐 `profile add/remove`
+
+**Files:**
+- Modify: `src/core/profile-service.ts`
+- Modify: `src/cli.ts`
+- Modify: `README.md`
+- Test: `tests/unit/profile-service.test.ts`
+- Test: `tests/integration/cli-actions.test.ts`
+
+- [x] **Step 1: 写失败测试，覆盖 profile 纯函数行为**
+
+覆盖以下行为：
+
+- `addProfile` 新增空 profile，并不修改原配置对象
+- 新增同名 profile 时报错
+- `removeProfile` 删除非激活 profile，并不修改原配置对象
+- 删除当前激活 profile 时报错
+
+- [x] **Step 2: 写失败测试，覆盖 CLI 读写配置**
+
+覆盖以下命令：
+
+- `pkg-switch profile add CJY-TEST`
+- `pkg-switch profile remove CJY-TEST`
+- `pkg-switch profile remove CJY-WORK` 在 `state.activeProfile=CJY-WORK` 时失败且不写回删除
+
+- [x] **Step 3: 实现 profile add/remove 与 CLI 写回**
+
+`profile-service` 只处理配置对象和边界校验；`src/cli.ts` 负责读取 `config.json`、可选读取 `state.json`，并通过 `writeJsonFile` 写回配置。
 
 - [x] **Step 4: 更新 README 并执行验证**
 

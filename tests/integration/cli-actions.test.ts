@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "../../src/index.js";
 import { createAppPaths } from "../../src/storage/app-paths.js";
 import { createBackup } from "../../src/storage/backup-repo.js";
-import { writeJsonFile } from "../../src/storage/config-repo.js";
+import { readJsonFile, writeJsonFile } from "../../src/storage/config-repo.js";
+import type { PkgSwitchConfig } from "../../src/shared/types.js";
 
 describe("cli actions", () => {
   let homeDir: string | undefined;
@@ -80,6 +81,39 @@ describe("cli actions", () => {
     expect(output).toContain("pla***ken");
     expect(output).not.toContain("plain-text-token");
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("profile add/remove 应写回 config.json", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+
+    await runCli(["profile", "add", "CJY-TEST"], { homeDir: preparedHome });
+    await runCli(["profile", "remove", "CJY-TEST"], { homeDir: preparedHome });
+
+    const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
+    const output = loggedText();
+
+    expect(config.profiles["CJY-TEST"]).toBeUndefined();
+    expect(output).toContain("Added profile: CJY-TEST");
+    expect(output).toContain("Removed profile: CJY-TEST");
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("profile remove 当前激活项时应失败且不写回删除", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+
+    await writeJsonFile(appPaths.stateFile, {
+      activeProfile: "CJY-WORK"
+    });
+    await runCli(["profile", "remove", "CJY-WORK"], { homeDir: preparedHome });
+
+    const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
+    const errorOutput = errorSpy.mock.calls.map((call) => call.join(" ")).join("\n");
+
+    expect(errorOutput).toContain("Cannot remove active profile: CJY-WORK");
+    expect(config.profiles["CJY-WORK"]).toBeDefined();
+    expect(process.exitCode).toBe(1);
   });
 
   it("switch 和 current 应切换配置并展示当前状态", async () => {
