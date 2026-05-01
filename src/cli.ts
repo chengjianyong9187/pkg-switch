@@ -1,6 +1,7 @@
 // ts
 import { cac } from "cac";
 import os from "node:os";
+import { listProfileBackups } from "./core/backup-service.js";
 import { getCurrentStatus } from "./core/current-service.js";
 import type { DoctorInput } from "./core/doctor-service.js";
 import { runDoctor } from "./core/doctor-service.js";
@@ -109,6 +110,25 @@ export function createCli(options: CliRuntimeOptions = {}) {
 
     const result = await restoreProfileBackup({ homeDir, backupId });
     console.log(`Restored backup: ${result.backupId}`);
+  });
+
+  cli.command("backup <action>", "管理备份：list").action(async (action: string) => {
+    if (action === "list") {
+      const backups = await listProfileBackups({ homeDir });
+
+      if (backups.length === 0) {
+        console.log("No backups found");
+        return;
+      }
+
+      for (const backup of backups) {
+        console.log(`${backup.backupId} ${backup.createdAt} files=${backup.fileCount}`);
+      }
+
+      return;
+    }
+
+    throw new Error(`Unknown backup action: ${action}`);
   });
 
   cli.command("profile <action> [name]", "管理 profile：list 或 show <name>").action(async (action: string, name?: string) => {

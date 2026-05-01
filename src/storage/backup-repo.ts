@@ -1,5 +1,5 @@
 // ts
-import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 export interface BackupTarget {
@@ -7,13 +7,13 @@ export interface BackupTarget {
   backupName?: string;
 }
 
-interface BackupManifestFile {
+export interface BackupManifestFile {
   targetPath: string;
   backupName: string;
   existed: boolean;
 }
 
-interface BackupManifest {
+export interface BackupManifest {
   id: string;
   createdAt: string;
   files: BackupManifestFile[];
@@ -84,4 +84,30 @@ export async function restoreBackup(backupDir: string, backupId: string): Promis
     // 原文件不存在时，恢复动作应删除本次切换产生的目标文件。
     await rm(file.targetPath, { force: true });
   }
+}
+
+async function readBackupManifest(backupDir: string, backupId: string): Promise<BackupManifest> {
+  return JSON.parse(await readFile(path.join(backupDir, backupId, "manifest.json"), "utf8")) as BackupManifest;
+}
+
+export async function listBackups(backupDir: string): Promise<BackupManifest[]> {
+  let entries;
+
+  try {
+    entries = await readdir(backupDir, { withFileTypes: true });
+  } catch (error) {
+    if (hasErrorCode(error, "ENOENT")) {
+      return [];
+    }
+
+    throw error;
+  }
+
+  const manifests = await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => readBackupManifest(backupDir, entry.name))
+  );
+
+  return manifests.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }

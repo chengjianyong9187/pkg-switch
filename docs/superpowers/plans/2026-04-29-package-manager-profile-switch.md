@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22、TypeScript 5、pnpm、Vitest、cac、yaml
 
-**Current Progress (2026-04-30):** Task 1 已完成。Task 2 到 Task 11 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
+**Current Progress (2026-05-01):** Task 1 已完成。Task 2 到 Task 12 已完成测试、实现、本地验证与功能分组提交。实际实现额外补齐了 CLI 运行时入口契约测试、构建产物 shebang 校验、CLI action 集成测试，以及 `tsconfig.build.json`。
 
 ---
 
@@ -33,7 +33,9 @@
 - `src/storage/config-repo.ts`
   读取和写入 `config.json` / `state.json`。
 - `src/storage/backup-repo.ts`
-  备份创建、查询、恢复。
+  备份创建、查询、列表、恢复。
+- `src/core/backup-service.ts`
+  备份摘要列表服务。
 - `src/core/config-merge.ts`
   `common + profile` 合并逻辑。
 - `src/core/config-validate.ts`
@@ -813,6 +815,44 @@ pnpm build
 - [x] **Step 3: 实现 switch 输入覆盖与 CLI 参数解析**
 
 `--cache-clean [mode]` 使用可选值注册，避免与 `--no-cache-clean` 在 CAC 中共享 option key 后触发缺值误判；实际缺值由 CLI 基于原始 `argv` 显式校验。
+
+- [x] **Step 4: 更新 README 并执行验证**
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+### Task 12: 补齐 `backup list`
+
+**Files:**
+- Create: `src/core/backup-service.ts`
+- Modify: `src/storage/backup-repo.ts`
+- Modify: `src/cli.ts`
+- Modify: `README.md`
+- Test: `tests/unit/backup-service.test.ts`
+- Test: `tests/integration/cli-actions.test.ts`
+
+- [x] **Step 1: 写失败测试，覆盖备份摘要列表服务**
+
+`listProfileBackups` 应满足：
+
+- 备份目录不存在时返回空列表
+- 读取每个备份目录中的 `manifest.json`
+- 按 `createdAt` 倒序返回 `backupId`、`createdAt`、`fileCount`
+
+- [x] **Step 2: 写失败测试，覆盖 CLI 输出**
+
+`pkg-switch backup list` 应输出可恢复备份摘要，包含：
+
+- `backupId`
+- `createdAt`
+- `files=<fileCount>`
+
+- [x] **Step 3: 实现存储层列表、core 摘要服务与 CLI 命令**
+
+`storage/backup-repo.ts` 负责读取 manifest，`core/backup-service.ts` 负责映射为 CLI 摘要，`src/cli.ts` 注册 `backup <action>` 并处理 `list`。
 
 - [x] **Step 4: 更新 README 并执行验证**
 

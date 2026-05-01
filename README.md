@@ -31,6 +31,7 @@ pkg-switch current
 pkg-switch profile list
 pkg-switch profile show CJY-WORK
 pkg-switch doctor
+pkg-switch backup list
 pkg-switch restore <backupId>
 ```
 
@@ -59,6 +60,14 @@ pkg-switch restore <backupId>
 - `alwaysAuth=true` 时是否缺少对应 token
 - `npm` / `pnpm` / `yarn` 命令是否可用
 
+## 备份与恢复
+
+`pkg-switch backup list` 会按创建时间倒序列出可恢复备份，输出备份编号、创建时间和文件数量。恢复时使用对应编号：
+
+```bash
+pkg-switch restore backup-2026-01-01T00-00-00-000Z
+```
+
 当前仓库状态：
 
 - 已完成设计规格
@@ -73,9 +82,10 @@ pkg-switch restore <backupId>
 - 已完成 `current`、`doctor`、`restore`、`profile list/show` 服务基础和命令接入
 - 已完成 `smart` / `none` / 安全拒绝 `full` 的缓存清理编排，并接入切换 warning 状态
 - 已完成 `switch --no-cache-clean` 与 `switch --cache-clean smart|full|none` 单次覆盖参数
+- 已完成 `backup list` 备份摘要列表，恢复前可直接查看可用 `backupId`
 - 已完成更完整的 doctor 配置、状态、registry 与鉴权一致性检查
 - 已完成示例配置、样例输出与 CLI 使用说明
-- 下一步：基于本机真实配置试运行 `doctor` / `switch`，或继续补齐 `backup list`、`profile add/remove`
+- 下一步：基于本机真实配置试运行 `doctor` / `backup list` / `switch`，或继续补齐 `profile add/remove`
 
 文档入口：
 

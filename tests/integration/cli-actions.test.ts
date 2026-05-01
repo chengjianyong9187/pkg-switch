@@ -1,10 +1,11 @@
 // ts
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "../../src/index.js";
 import { createAppPaths } from "../../src/storage/app-paths.js";
+import { createBackup } from "../../src/storage/backup-repo.js";
 import { writeJsonFile } from "../../src/storage/config-repo.js";
 
 describe("cli actions", () => {
@@ -178,5 +179,22 @@ describe("cli actions", () => {
     expect(errorOutput).toContain("cache clean mode is required");
     await expect(readFile(path.join(preparedHome, ".npmrc"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
     expect(process.exitCode).toBe(1);
+  });
+
+  it("backup list 应输出可恢复备份摘要", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+    const npmrcFile = path.join(preparedHome, ".npmrc");
+
+    await writeFile(npmrcFile, "registry=https://old.example.com/\n", "utf8");
+    const backupId = await createBackup(appPaths.backupDir, [{ filePath: npmrcFile }], new Date("2026-01-01T00:00:00.000Z"));
+
+    await runCli(["backup", "list"], { homeDir: preparedHome });
+
+    const output = loggedText();
+    expect(output).toContain(backupId);
+    expect(output).toContain("2026-01-01T00:00:00.000Z");
+    expect(output).toContain("files=1");
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 });
