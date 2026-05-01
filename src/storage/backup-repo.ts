@@ -1,6 +1,7 @@
 // ts
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { PkgSwitchState } from "../shared/types.js";
 
 export interface BackupTarget {
   filePath: string;
@@ -17,6 +18,12 @@ export interface BackupManifest {
   id: string;
   createdAt: string;
   files: BackupManifestFile[];
+  stateSnapshot?: PkgSwitchState | null;
+}
+
+export interface CreateBackupOptions {
+  now?: Date;
+  stateSnapshot?: PkgSwitchState | null;
 }
 
 function hasErrorCode(error: unknown, code: string): boolean {
@@ -40,13 +47,33 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-export async function createBackup(backupDir: string, targets: BackupTarget[], now = new Date()): Promise<string> {
+function resolveCreateBackupOptions(nowOrOptions: Date | CreateBackupOptions): Required<Pick<CreateBackupOptions, "now">> &
+  Pick<CreateBackupOptions, "stateSnapshot"> {
+  if (nowOrOptions instanceof Date) {
+    return {
+      now: nowOrOptions
+    };
+  }
+
+  return {
+    now: nowOrOptions.now ?? new Date(),
+    stateSnapshot: nowOrOptions.stateSnapshot
+  };
+}
+
+export async function createBackup(
+  backupDir: string,
+  targets: BackupTarget[],
+  nowOrOptions: Date | CreateBackupOptions = new Date()
+): Promise<string> {
+  const { now, stateSnapshot } = resolveCreateBackupOptions(nowOrOptions);
   const backupId = createBackupId(now);
   const backupRoot = path.join(backupDir, backupId);
   const manifest: BackupManifest = {
     id: backupId,
     createdAt: now.toISOString(),
-    files: []
+    files: [],
+    stateSnapshot
   };
 
   await mkdir(backupRoot, { recursive: true });
@@ -71,7 +98,7 @@ export async function createBackup(backupDir: string, targets: BackupTarget[], n
   return backupId;
 }
 
-export async function restoreBackup(backupDir: string, backupId: string): Promise<void> {
+export async function restoreBackup(backupDir: string, backupId: string): Promise<BackupManifest> {
   const backupRoot = path.join(backupDir, backupId);
   const manifest = JSON.parse(await readFile(path.join(backupRoot, "manifest.json"), "utf8")) as BackupManifest;
 
@@ -84,6 +111,8 @@ export async function restoreBackup(backupDir: string, backupId: string): Promis
     // 原文件不存在时，恢复动作应删除本次切换产生的目标文件。
     await rm(file.targetPath, { force: true });
   }
+
+  return manifest;
 }
 
 async function readBackupManifest(backupDir: string, backupId: string): Promise<BackupManifest> {

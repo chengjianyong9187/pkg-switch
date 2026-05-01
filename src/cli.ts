@@ -5,13 +5,16 @@ import { listProfileBackups } from "./core/backup-service.js";
 import { getCurrentStatus } from "./core/current-service.js";
 import type { DoctorInput } from "./core/doctor-service.js";
 import { runDoctor } from "./core/doctor-service.js";
-import { addProfile, listProfiles, removeProfile, showProfile } from "./core/profile-service.js";
+import { initConfig } from "./core/init-service.js";
+import { addProfile, listProfiles, removeProfile, setProfileValue, showProfile, unsetProfileValue } from "./core/profile-service.js";
 import { restoreProfileBackup } from "./core/restore-service.js";
+import { previewSwitchProfile } from "./core/switch-preview-service.js";
 import { switchProfile } from "./core/switch-service.js";
 import type { SwitchProfileDependencies } from "./core/switch-service.js";
 import type { CacheCleanMode, PkgSwitchConfig, PkgSwitchState } from "./shared/types.js";
 import { createAppPaths } from "./storage/app-paths.js";
 import { readJsonFile, readOptionalJsonFile, writeJsonFile } from "./storage/config-repo.js";
+import { pkgSwitchVersion } from "./version.js";
 
 export interface CliRuntimeOptions {
   homeDir?: string;
@@ -22,6 +25,12 @@ export interface CliRuntimeOptions {
 
 interface SwitchCommandOptions {
   cacheClean?: string | boolean;
+  dryRun?: boolean;
+  diff?: boolean;
+}
+
+interface InitCommandOptions {
+  force?: boolean;
 }
 
 const cacheCleanModes: CacheCleanMode[] = ["smart", "full", "none"];
@@ -56,6 +65,17 @@ export function createCli(options: CliRuntimeOptions = {}) {
   const homeDir = options.homeDir ?? os.homedir();
   const argv = options.argv ?? process.argv.slice(2);
 
+  cli.version(pkgSwitchVersion);
+
+  cli
+    .command("init", "创建默认 profile 配置")
+    .option("--force", "覆盖已存在的 config.json")
+    .action(async (commandOptions: InitCommandOptions = {}) => {
+      const result = await initConfig({ homeDir, force: commandOptions.force });
+
+      console.log(`${result.overwritten ? "Overwrote" : "Created"} config: ${result.configFile}`);
+    });
+
   cli.command("current", "显示当前激活 profile").action(async () => {
     const status = await getCurrentStatus({ homeDir });
 
@@ -74,6 +94,8 @@ export function createCli(options: CliRuntimeOptions = {}) {
     .command("switch <name>", "切换到指定 profile")
     .option("--no-cache-clean", "跳过本次缓存清理")
     .option("--cache-clean [mode]", "单次指定缓存清理模式：smart、full 或 none")
+    .option("--dry-run", "仅预览将写入的配置，不落盘、不备份、不清理缓存")
+    .option("--diff", "输出当前配置与目标配置的脱敏差异，不落盘")
     .action(async (name: string, commandOptions: SwitchCommandOptions = {}) => {
       // 对占位参数做最小保护，避免空字符串等异常输入静默通过。
       if (!name || !name.trim()) {
@@ -86,6 +108,24 @@ export function createCli(options: CliRuntimeOptions = {}) {
 
       const cacheCleanModeOverride =
         typeof commandOptions.cacheClean === "string" ? parseCacheCleanMode(commandOptions.cacheClean) : undefined;
+
+      if (commandOptions.dryRun || commandOptions.diff) {
+        const result = await previewSwitchProfile({
+          homeDir,
+          profileName: name,
+          includeDiff: commandOptions.diff
+        });
+
+        console.log(`${commandOptions.diff ? "Diff" : "Dry run"} for profile: ${result.profileName}`);
+
+        for (const target of result.targets) {
+          console.log(`[${target.target}] ${target.filePath}`);
+          console.log(commandOptions.diff ? target.diff : target.maskedContent);
+        }
+
+        return;
+      }
+
       const result = await switchProfile(
         {
           homeDir,
@@ -140,8 +180,8 @@ export function createCli(options: CliRuntimeOptions = {}) {
   });
 
   cli
-    .command("profile <action> [name]", "管理 profile：list、show <name>、add <name>、remove <name>")
-    .action(async (action: string, name?: string) => {
+    .command("profile <action> [name] [path] [value]", "管理 profile：list、show、add、remove、set、unset")
+    .action(async (action: string, name?: string, configPath?: string, value?: string) => {
       if (action === "list") {
         const names = listProfiles(await readConfig(homeDir));
 
@@ -178,6 +218,38 @@ export function createCli(options: CliRuntimeOptions = {}) {
 
         await writeConfig(homeDir, removeProfile(await readConfig(homeDir), name, await readState(homeDir)));
         console.log(`Removed profile: ${name}`);
+        return;
+      }
+
+      if (action === "set") {
+        if (!name || !name.trim()) {
+          throw new Error("profile name is required");
+        }
+
+        if (!configPath || !configPath.trim()) {
+          throw new Error("profile value path is required");
+        }
+
+        if (value === undefined) {
+          throw new Error("profile value is required");
+        }
+
+        await writeConfig(homeDir, setProfileValue(await readConfig(homeDir), name, configPath, value));
+        console.log(`Set profile value: ${name} ${configPath}`);
+        return;
+      }
+
+      if (action === "unset") {
+        if (!name || !name.trim()) {
+          throw new Error("profile name is required");
+        }
+
+        if (!configPath || !configPath.trim()) {
+          throw new Error("profile value path is required");
+        }
+
+        await writeConfig(homeDir, unsetProfileValue(await readConfig(homeDir), name, configPath));
+        console.log(`Unset profile value: ${name} ${configPath}`);
         return;
       }
 

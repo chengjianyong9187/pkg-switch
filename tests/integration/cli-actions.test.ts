@@ -99,6 +99,27 @@ describe("cli actions", () => {
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
+  it("profile set/unset 应更新 config.json 且输出不包含敏感值", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+
+    await runCli(["profile", "set", "CJY-PERSONAL", "npm.extraConfig[//registry.npmjs.org/:_authToken]", "plain-text-token"], {
+      homeDir: preparedHome
+    });
+    await runCli(["profile", "unset", "CJY-PERSONAL", "npm.extraConfig[//registry.npmjs.org/:_authToken]"], {
+      homeDir: preparedHome
+    });
+
+    const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
+    const output = loggedText();
+
+    expect(config.profiles["CJY-PERSONAL"].npm?.extraConfig?.["//registry.npmjs.org/:_authToken"]).toBeUndefined();
+    expect(output).toContain("Set profile value: CJY-PERSONAL npm.extraConfig[//registry.npmjs.org/:_authToken]");
+    expect(output).toContain("Unset profile value: CJY-PERSONAL npm.extraConfig[//registry.npmjs.org/:_authToken]");
+    expect(output).not.toContain("plain-text-token");
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
   it("profile remove 当前激活项时应失败且不写回删除", async () => {
     const preparedHome = await prepareHome();
     const appPaths = createAppPaths(preparedHome);
@@ -129,6 +150,54 @@ describe("cli actions", () => {
     expect(npmrc).toContain("registry=https://nexus.example.com/repository/npm-group/");
     expect(output).toContain("Switched to CJY-WORK");
     expect(output).toContain("Active profile: CJY-WORK");
+  });
+
+  it("switch --dry-run 应预览写入内容但不落盘、不创建 state", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+
+    await runCli(["switch", "CJY-WORK", "--dry-run"], { homeDir: preparedHome });
+
+    const output = loggedText();
+    expect(output).toContain("Dry run for profile: CJY-WORK");
+    expect(output).toContain("registry=https://nexus.example.com/repository/npm-group/");
+    expect(output).toContain("_authToken=pla***ken");
+    expect(output).not.toContain("plain-text-token");
+    await expect(readFile(path.join(preparedHome, ".npmrc"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(appPaths.stateFile, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("switch --diff 应输出脱敏差异但不落盘", async () => {
+    const preparedHome = await prepareHome();
+
+    await writeFile(path.join(preparedHome, ".npmrc"), "registry=https://old.example.com/\n_authToken=old-token\n", "utf8");
+    await runCli(["switch", "CJY-WORK", "--diff"], { homeDir: preparedHome });
+
+    const output = loggedText();
+    expect(output).toContain("Diff for profile: CJY-WORK");
+    expect(output).toContain("-registry=https://old.example.com/");
+    expect(output).toContain("+registry=https://nexus.example.com/repository/npm-group/");
+    expect(output).toContain("-_authToken=old***ken");
+    expect(output).toContain("+_authToken=pla***ken");
+    expect(output).not.toContain("plain-text-token");
+    expect(await readFile(path.join(preparedHome, ".npmrc"), "utf8")).toBe("registry=https://old.example.com/\n_authToken=old-token\n");
+  });
+
+  it("init 应创建默认配置，已有配置时可用 --force 覆盖", async () => {
+    homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-cli-init-"));
+    const appPaths = createAppPaths(homeDir);
+
+    await runCli(["init"], { homeDir });
+    await runCli(["init", "--force"], { homeDir });
+
+    const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
+    const output = loggedText();
+
+    expect(config.profiles.work).toBeDefined();
+    expect(config.profiles.personal).toBeDefined();
+    expect(output).toContain(`Created config: ${appPaths.configFile}`);
+    expect(output).toContain(`Overwrote config: ${appPaths.configFile}`);
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 
   it("doctor 应输出诊断摘要", async () => {

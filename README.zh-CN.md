@@ -10,6 +10,7 @@
 
 ```bash
 npm install --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -17,6 +18,7 @@ pkg-switch --help
 
 ```bash
 pnpm add --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -31,7 +33,19 @@ pkg-switch --help
 - npm 输出文件：`.npmrc`
 - yarn 输出文件：`.yarnrc.yml`
 
-可以从示例配置开始：
+可以先生成默认配置：
+
+```bash
+pkg-switch init
+```
+
+已有配置时需要显式覆盖：
+
+```bash
+pkg-switch init --force
+```
+
+也可以从示例配置开始：
 
 ```powershell
 New-Item -ItemType Directory -Force "$env:USERPROFILE\.pkg-switch"
@@ -44,10 +58,16 @@ Copy-Item .\examples\config.example.json "$env:USERPROFILE\.pkg-switch\config.js
 
 ```bash
 pkg-switch current
+pkg-switch init
 pkg-switch profile list
 pkg-switch profile show work
 pkg-switch profile add staging
+pkg-switch profile set personal npm.registry https://registry.npmmirror.com/
+pkg-switch profile set personal "npm.extraConfig[//registry.npmjs.org/:_authToken]" "YOUR_NPMJS_TOKEN"
+pkg-switch profile unset personal npm.authToken
 pkg-switch profile remove staging
+pkg-switch switch work --dry-run
+pkg-switch switch work --diff
 pkg-switch switch work
 pkg-switch switch personal --no-cache-clean
 pkg-switch switch work --cache-clean smart

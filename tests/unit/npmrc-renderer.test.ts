@@ -46,4 +46,17 @@ describe("renderNpmrc", () => {
     expect(output).toContain("electron_mirror=https://cdn.npmmirror.com/binaries/electron/");
     expect(output).toContain("msvs_version=2022");
   });
+
+  it("应把 pnpm.storeDir 渲染为 .npmrc 的 store-dir", () => {
+    const output = renderNpmrc({
+      npm: {
+        registry: "https://registry.npmmirror.com/"
+      },
+      pnpm: {
+        storeDir: "${HOME}/.local/share/pnpm/store"
+      }
+    });
+
+    expect(output).toContain("store-dir=${HOME}/.local/share/pnpm/store");
+  });
 });

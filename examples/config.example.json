@@ -4,7 +4,7 @@
     "updatedAt": "2026-05-02T00:00:00+00:00"
   },
   "defaults": {
-    "writeTargets": ["npm", "yarn"],
+    "writeTargets": ["npm", "yarn", "pnpm"],
     "backupBeforeWrite": true,
     "clearCacheOnSwitch": true,
     "cacheCleanMode": "smart"

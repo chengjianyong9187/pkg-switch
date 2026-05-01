@@ -29,6 +29,15 @@ describe("runCli", () => {
     expect(process.exitCode).toBeUndefined();
   });
 
+  it("应在 --version 时输出包版本号", () => {
+    runCli(["--version"]);
+
+    const output = logSpy.mock.calls.map((call) => call.join(" ")).join("\n");
+    expect(output).toContain("pkg-switch/0.2.0");
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(process.exitCode).toBeUndefined();
+  });
+
   it("应在 switch 缺少 profile 名称时设置失败退出码", () => {
     runCli(["switch"]);
 

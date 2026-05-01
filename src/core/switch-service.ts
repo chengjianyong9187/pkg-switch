@@ -10,7 +10,7 @@ import { SwitchError } from "../shared/errors.js";
 import type { CacheCleanMode, PkgSwitchConfig, PkgSwitchState, WriteTarget } from "../shared/types.js";
 import { createAppPaths } from "../storage/app-paths.js";
 import { createBackup, restoreBackup } from "../storage/backup-repo.js";
-import { readJsonFile, writeJsonFile } from "../storage/config-repo.js";
+import { readJsonFile, readOptionalJsonFile, writeJsonFile } from "../storage/config-repo.js";
 
 export interface SwitchProfileInput {
   homeDir: string;
@@ -32,7 +32,7 @@ export interface SwitchProfileDependencies {
   runCacheCommand?: CleanCachesInput["runCommand"];
 }
 
-interface TargetFile {
+export interface SwitchTargetFile {
   target: WriteTarget;
   filePath: string;
   content: string;
@@ -44,8 +44,12 @@ function uniqueTargets(targets: WriteTarget[]): WriteTarget[] {
   return [...new Set(targets)];
 }
 
-function createTargetFiles(homeDir: string, targets: WriteTarget[], npmrc: string, yarnrc: string): TargetFile[] {
-  const targetFiles: TargetFile[] = [];
+export function resolveWriteTargets(config: PkgSwitchConfig): WriteTarget[] {
+  return uniqueTargets(config.defaults?.writeTargets ?? defaultWriteTargets);
+}
+
+function createTargetFiles(homeDir: string, targets: WriteTarget[], npmrc: string, yarnrc: string): SwitchTargetFile[] {
+  const targetFiles: SwitchTargetFile[] = [];
 
   if (targets.includes("npm") || targets.includes("pnpm")) {
     targetFiles.push({
@@ -64,6 +68,13 @@ function createTargetFiles(homeDir: string, targets: WriteTarget[], npmrc: strin
   }
 
   return targetFiles;
+}
+
+export function createSwitchTargetFiles(homeDir: string, config: PkgSwitchConfig, profileName: string): SwitchTargetFile[] {
+  const writeTargets = resolveWriteTargets(config);
+  const resolved = resolveProfileConfig(config, profileName);
+
+  return createTargetFiles(homeDir, writeTargets, renderNpmrc(resolved), renderYarnrc(resolved));
 }
 
 function createState(
@@ -105,14 +116,17 @@ export async function switchProfile(
   const appPaths = createAppPaths(input.homeDir);
   const writeTextFile = dependencies.writeTextFile ?? defaultWriteTextFile;
   const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
-  const writeTargets = uniqueTargets(config.defaults?.writeTargets ?? defaultWriteTargets);
-  const resolved = resolveProfileConfig(config, input.profileName);
-  const targetFiles = createTargetFiles(input.homeDir, writeTargets, renderNpmrc(resolved), renderYarnrc(resolved));
+  const writeTargets = resolveWriteTargets(config);
+  const targetFiles = createSwitchTargetFiles(input.homeDir, config, input.profileName);
   const shouldBackup = config.defaults?.backupBeforeWrite ?? true;
+  const previousState = await readOptionalJsonFile<PkgSwitchState>(appPaths.stateFile);
   const backupId = shouldBackup
     ? await createBackup(
         appPaths.backupDir,
-        targetFiles.map((targetFile) => ({ filePath: targetFile.filePath }))
+        targetFiles.map((targetFile) => ({ filePath: targetFile.filePath })),
+        {
+          stateSnapshot: previousState ?? null
+        }
       )
     : undefined;
 

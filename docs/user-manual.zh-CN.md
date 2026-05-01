@@ -5,7 +5,7 @@
 - **文档编号**: pkg-switch-OPS-ZH-001
 - **文档类型**: 操作手册
 - **适用范围**: `pkg-switch` 安装、配置、profile 切换、诊断、备份与恢复
-- **当前版本**: 1.1
+- **当前版本**: 1.2
 - **状态**: 正式
 - **更新日期**: 2026-05-02
 
@@ -16,7 +16,7 @@
 - `npm` 用户配置：写入 `.npmrc`
 - `yarn` 用户配置：写入 `.yarnrc.yml`
 - `pnpm` 相关配置：通过 `.npmrc` 和缓存清理命令协同生效
-- 切换前备份、失败回滚、当前状态记录、环境诊断
+- 初始化配置、切换预览、切换前备份、失败回滚、当前状态记录、环境诊断
 
 典型场景：
 
@@ -30,6 +30,7 @@
 
 ```bash
 npm install --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -37,6 +38,7 @@ pkg-switch --help
 
 ```bash
 pnpm add --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -83,7 +85,7 @@ Linux/macOS 默认位置：
     "version": 1
   },
   "defaults": {
-    "writeTargets": ["npm", "yarn"],
+    "writeTargets": ["npm", "yarn", "pnpm"],
     "backupBeforeWrite": true,
     "clearCacheOnSwitch": true,
     "cacheCleanMode": "smart"
@@ -97,7 +99,7 @@ Linux/macOS 默认位置：
 
 | 字段 | 说明 |
 | --- | --- |
-| `defaults.writeTargets` | 切换时写入哪些目标，常用 `npm`、`yarn` |
+| `defaults.writeTargets` | 切换时写入哪些目标，常用 `npm`、`yarn`、`pnpm` |
 | `defaults.backupBeforeWrite` | 写入前是否备份已有 rc 文件 |
 | `defaults.clearCacheOnSwitch` | 切换成功后是否按默认策略清理缓存 |
 | `defaults.cacheCleanMode` | 缓存清理模式：`smart`、`full`、`none` |
@@ -119,7 +121,7 @@ Linux/macOS 默认位置：
     "version": 1
   },
   "defaults": {
-    "writeTargets": ["npm", "yarn"],
+    "writeTargets": ["npm", "yarn", "pnpm"],
     "backupBeforeWrite": true,
     "clearCacheOnSwitch": true,
     "cacheCleanMode": "smart"
@@ -175,10 +177,23 @@ Linux/macOS 默认位置：
 说明：
 
 - 示例中的 `${HOME}` 和 token 占位符需要按本机环境替换。
+- `pnpm.storeDir` 会写入 `.npmrc` 的 `store-dir=...`，供 pnpm 使用。
 - host 级鉴权放在 `npm.extraConfig` 中，例如 `//registry.npmjs.org/:_authToken`。
 - 发布到 npmjs 的项目建议在自身 `package.json` 中声明 `publishConfig.registry=https://registry.npmjs.org/`。
 
 ## 6. profile 管理
+
+初始化默认配置：
+
+```bash
+pkg-switch init
+```
+
+覆盖已有配置：
+
+```bash
+pkg-switch init --force
+```
 
 查看当前状态：
 
@@ -211,10 +226,27 @@ pkg-switch profile add staging
 pkg-switch profile remove staging
 ```
 
+设置 profile 字段：
+
+```bash
+pkg-switch profile set personal npm.registry https://registry.npmmirror.com/
+pkg-switch profile set personal npm.alwaysAuth false
+pkg-switch profile set personal "npm.extraConfig[//registry.npmjs.org/:_authToken]" "YOUR_NPMJS_TOKEN"
+```
+
+删除 profile 中的本地覆盖：
+
+```bash
+pkg-switch profile unset personal npm.authToken
+pkg-switch profile unset personal "npm.extraConfig[//registry.npmjs.org/:_authToken]"
+```
+
 注意：
 
 - 新增同名 profile 会失败。
 - 删除当前激活 profile 会失败。
+- `profile set` 支持 `true`、`false`、`null` 的简单值解析，其它值按字符串保存。
+- 如果路径中某一段包含 `.` 或 `/`，使用方括号写法，例如 `npm.extraConfig[//registry.npmjs.org/:_authToken]`。
 - `profile show` 会脱敏 token、auth、password、username、email 等敏感字段。
 
 ## 7. profile 切换
@@ -229,6 +261,18 @@ pkg-switch switch work
 
 ```bash
 pkg-switch switch personal
+```
+
+只预览目标文件内容，不写入、不备份、不清理缓存：
+
+```bash
+pkg-switch switch work --dry-run
+```
+
+查看当前文件与目标文件的脱敏差异，不写入：
+
+```bash
+pkg-switch switch work --diff
 ```
 
 切换但跳过本次缓存清理：
@@ -277,6 +321,7 @@ pkg-switch restore <backupId>
 
 - 保持 `backupBeforeWrite=true`。
 - 恢复前先执行 `pkg-switch backup list` 确认备份编号。
+- 新版本创建的备份会保存切换前的 state 快照，恢复时会同步还原 state。
 - 恢复后执行 `pkg-switch current` 和 `pkg-switch doctor` 复核状态。
 
 ## 9. npmjs 发布建议
@@ -352,6 +397,9 @@ registry 必须是合法 URL，例如：
 
 ```bash
 pkg-switch --help
+pkg-switch --version
+pkg-switch switch personal --dry-run
+pkg-switch switch personal --diff
 pkg-switch profile list
 pkg-switch profile show personal
 pkg-switch doctor
@@ -363,6 +411,8 @@ pkg-switch backup list
 预期结果：
 
 - `pkg-switch --help` 能展示命令列表。
+- `pkg-switch --version` 能展示当前 CLI 版本。
+- `switch --dry-run` 和 `switch --diff` 不写入 rc 文件，且不输出明文 token。
 - `profile list` 包含预期 profile。
 - `profile show` 不输出明文 token。
 - `doctor` 不出现配置读取、registry、鉴权相关 error。
@@ -379,4 +429,5 @@ pkg-switch backup list
 
 | 版本 | 日期 | 作者 | 变更内容 |
 | --- | --- | --- | --- |
+| v1.2 | 2026-05-02 | Codex | 补充 init、profile set/unset、dry-run/diff、pnpm store-dir 与 restore state 说明 |
 | v1.1 | 2026-05-02 | Codex | 去除个人化 profile、本机路径和私有环境信息，补充通用发布配置说明 |

@@ -1,6 +1,6 @@
 // ts
 import { describe, expect, it } from "vitest";
-import { addProfile, listProfiles, removeProfile, showProfile } from "../../src/core/profile-service.js";
+import { addProfile, listProfiles, removeProfile, setProfileValue, showProfile, unsetProfileValue } from "../../src/core/profile-service.js";
 import type { PkgSwitchConfig } from "../../src/shared/types.js";
 
 describe("profile service", () => {
@@ -83,5 +83,30 @@ describe("profile service", () => {
 
   it("删除当前激活 profile 时应抛出明确错误", () => {
     expect(() => removeProfile(config, "CJY-WORK", { activeProfile: "CJY-WORK" })).toThrow("Cannot remove active profile: CJY-WORK");
+  });
+
+  it("应按路径设置 profile 字段并解析 boolean/null 值", () => {
+    const result = setProfileValue(config, "CJY-PERSONAL", "npm.alwaysAuth", "false");
+
+    expect(result.profiles["CJY-PERSONAL"].npm?.alwaysAuth).toBe(false);
+    expect(config.profiles["CJY-PERSONAL"].npm?.alwaysAuth).toBeUndefined();
+  });
+
+  it("应支持在 extraConfig 中设置包含点号和斜杠的键", () => {
+    const result = setProfileValue(
+      config,
+      "CJY-PERSONAL",
+      "npm.extraConfig[//registry.npmjs.org/:_authToken]",
+      "plain-text-token"
+    );
+
+    expect(result.profiles["CJY-PERSONAL"].npm?.extraConfig?.["//registry.npmjs.org/:_authToken"]).toBe("plain-text-token");
+  });
+
+  it("应删除 profile 中指定路径的本地覆盖", () => {
+    const result = unsetProfileValue(config, "CJY-PERSONAL", "npm.authToken");
+
+    expect(result.profiles["CJY-PERSONAL"].npm).not.toHaveProperty("authToken");
+    expect(config.profiles["CJY-PERSONAL"].npm).toHaveProperty("authToken");
   });
 });

@@ -5,7 +5,7 @@
 - **Document ID**: pkg-switch-OPS-EN-001
 - **Type**: User manual
 - **Scope**: Installation, configuration, profile switching, diagnostics, backups, and restore operations
-- **Version**: 1.1
+- **Version**: 1.2
 - **Status**: Stable
 - **Updated At**: 2026-05-02
 
@@ -17,7 +17,7 @@ It can write:
 
 - `.npmrc` for npm and pnpm-compatible user configuration
 - `.yarnrc.yml` for yarn user configuration
-- State and backup files under `.pkg-switch`
+- Config initialization, switch previews, state files, and backup files under `.pkg-switch`
 
 Common use cases:
 
@@ -31,6 +31,7 @@ Install from npmjs:
 
 ```bash
 npm install --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -38,6 +39,7 @@ Install with pnpm:
 
 ```bash
 pnpm add --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -84,7 +86,7 @@ Top-level `config.json` shape:
     "version": 1
   },
   "defaults": {
-    "writeTargets": ["npm", "yarn"],
+    "writeTargets": ["npm", "yarn", "pnpm"],
     "backupBeforeWrite": true,
     "clearCacheOnSwitch": true,
     "cacheCleanMode": "smart"
@@ -98,7 +100,7 @@ Field summary:
 
 | Field | Description |
 | --- | --- |
-| `defaults.writeTargets` | Targets to write during a switch, commonly `npm` and `yarn` |
+| `defaults.writeTargets` | Targets to write during a switch, commonly `npm`, `yarn`, and `pnpm` |
 | `defaults.backupBeforeWrite` | Whether to back up existing rc files before writing |
 | `defaults.clearCacheOnSwitch` | Whether to clean caches after a successful switch |
 | `defaults.cacheCleanMode` | Cache clean mode: `smart`, `full`, or `none` |
@@ -120,7 +122,7 @@ Merge rules:
     "version": 1
   },
   "defaults": {
-    "writeTargets": ["npm", "yarn"],
+    "writeTargets": ["npm", "yarn", "pnpm"],
     "backupBeforeWrite": true,
     "clearCacheOnSwitch": true,
     "cacheCleanMode": "smart"
@@ -176,10 +178,23 @@ Merge rules:
 Notes:
 
 - Replace `${HOME}` and token placeholders with values for your machine.
+- `pnpm.storeDir` is rendered into `.npmrc` as `store-dir=...`.
 - Place host-level auth entries in `npm.extraConfig`, for example `//registry.npmjs.org/:_authToken`.
 - Projects published to npmjs should set `publishConfig.registry=https://registry.npmjs.org/` in their own `package.json`.
 
 ## 6. Profile Management
+
+Create a default config:
+
+```bash
+pkg-switch init
+```
+
+Overwrite an existing config:
+
+```bash
+pkg-switch init --force
+```
 
 Show current status:
 
@@ -212,10 +227,27 @@ Remove an inactive profile:
 pkg-switch profile remove staging
 ```
 
+Set a profile value:
+
+```bash
+pkg-switch profile set personal npm.registry https://registry.npmmirror.com/
+pkg-switch profile set personal npm.alwaysAuth false
+pkg-switch profile set personal "npm.extraConfig[//registry.npmjs.org/:_authToken]" "YOUR_NPMJS_TOKEN"
+```
+
+Remove a local profile override:
+
+```bash
+pkg-switch profile unset personal npm.authToken
+pkg-switch profile unset personal "npm.extraConfig[//registry.npmjs.org/:_authToken]"
+```
+
 Notes:
 
 - Adding an existing profile fails.
 - Removing the active profile fails.
+- `profile set` parses `true`, `false`, and `null`; all other values are saved as strings.
+- Use bracket notation when a path segment contains `.` or `/`, for example `npm.extraConfig[//registry.npmjs.org/:_authToken]`.
 - `profile show` masks tokens, auth fields, passwords, usernames, and emails.
 
 ## 7. Switching Profiles
@@ -230,6 +262,18 @@ Switch to the personal profile:
 
 ```bash
 pkg-switch switch personal
+```
+
+Preview target files without writing, backing up, or cleaning caches:
+
+```bash
+pkg-switch switch work --dry-run
+```
+
+Show a masked diff between current files and target files without writing:
+
+```bash
+pkg-switch switch work --diff
 ```
 
 Switch and skip cache cleaning:
@@ -278,6 +322,7 @@ Recommendations:
 
 - Keep `backupBeforeWrite=true`.
 - Run `pkg-switch backup list` before restoring.
+- Backups created by newer versions include a state snapshot; restore operations restore that state as well.
 - Run `pkg-switch current` and `pkg-switch doctor` after restore.
 
 ## 9. npmjs Publishing
@@ -353,6 +398,9 @@ Do not use `registry.npmmirror.com` or an empty string.
 
 ```bash
 pkg-switch --help
+pkg-switch --version
+pkg-switch switch personal --dry-run
+pkg-switch switch personal --diff
 pkg-switch profile list
 pkg-switch profile show personal
 pkg-switch doctor
@@ -364,6 +412,8 @@ pkg-switch backup list
 Expected result:
 
 - `pkg-switch --help` prints commands.
+- `pkg-switch --version` prints the installed CLI version.
+- `switch --dry-run` and `switch --diff` do not write rc files and do not print plain-text tokens.
 - `profile list` includes your expected profiles.
 - `profile show` does not print plain-text tokens.
 - `doctor` has no config, registry, or auth errors.
@@ -380,4 +430,5 @@ Expected result:
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| v1.2 | 2026-05-02 | Codex | Added init, profile set/unset, dry-run/diff, pnpm store-dir, and restore state notes |
 | v1.1 | 2026-05-02 | Codex | Removed personal profile names, local paths, and private-environment details; added generic publishing guidance |

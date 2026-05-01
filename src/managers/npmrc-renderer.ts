@@ -38,6 +38,8 @@ export function renderNpmrc(config: ResolvedProfileConfig): string {
     appendExtraConfigLines(lines, npm.extraConfig);
   }
 
+  appendStringLine(lines, "store-dir", config.pnpm?.storeDir);
+
   for (const [scopeName, scope] of Object.entries(config.scopes ?? {}).sort(([left], [right]) => left.localeCompare(right))) {
     // scope 在 merge 阶段已经处理 null，这里只负责稳定渲染。
     appendScopeLines(lines, scopeName, scope);

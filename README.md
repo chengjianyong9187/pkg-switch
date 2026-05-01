@@ -10,6 +10,7 @@ It is designed for developers who move between different registry environments, 
 
 ```bash
 npm install --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -17,6 +18,7 @@ Or install with pnpm:
 
 ```bash
 pnpm add --global pkg-switch
+pkg-switch --version
 pkg-switch --help
 ```
 
@@ -30,13 +32,19 @@ The default runtime files are:
 - `%USERPROFILE%\.npmrc` or `$HOME/.npmrc`
 - `%USERPROFILE%\.yarnrc.yml` or `$HOME/.yarnrc.yml`
 
-Start from the example:
+Create a default config first:
 
 ```bash
-pkg-switch profile list
+pkg-switch init
 ```
 
-Or copy and edit:
+Use `--force` only when you want to overwrite an existing config:
+
+```bash
+pkg-switch init --force
+```
+
+Or copy and edit the example:
 
 ```bash
 mkdir -p "$HOME/.pkg-switch"
@@ -56,10 +64,16 @@ Keep real tokens only in your local `config.json`. Do not commit them to a repos
 
 ```bash
 pkg-switch current
+pkg-switch init
 pkg-switch profile list
 pkg-switch profile show work
 pkg-switch profile add staging
+pkg-switch profile set personal npm.registry https://registry.npmmirror.com/
+pkg-switch profile set personal "npm.extraConfig[//registry.npmjs.org/:_authToken]" "YOUR_NPMJS_TOKEN"
+pkg-switch profile unset personal npm.authToken
 pkg-switch profile remove staging
+pkg-switch switch work --dry-run
+pkg-switch switch work --diff
 pkg-switch switch work
 pkg-switch switch personal --no-cache-clean
 pkg-switch switch work --cache-clean smart

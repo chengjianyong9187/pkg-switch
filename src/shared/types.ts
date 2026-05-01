@@ -66,5 +66,5 @@ export interface PkgSwitchState {
   lastSwitchedAt?: string;
   lastBackupId?: string;
   lastWriteTargets?: WriteTarget[];
-  lastSwitchStatus?: "success" | "warning" | "failed";
+  lastSwitchStatus?: "success" | "warning" | "failed" | "restored";
 }
