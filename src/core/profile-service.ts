@@ -187,6 +187,37 @@ export function removeProfile(
   return nextConfig;
 }
 
+export function cloneProfile(config: PkgSwitchConfig, sourceProfileName: string, targetProfileName: string): PkgSwitchConfig {
+  assertProfileName(sourceProfileName);
+  assertProfileName(targetProfileName);
+  assertProfileExists(config, sourceProfileName);
+
+  if (config.profiles[targetProfileName]) {
+    throw new Error(`Profile already exists: ${targetProfileName}`);
+  }
+
+  const nextConfig = structuredClone(config);
+  nextConfig.profiles[targetProfileName] = structuredClone(nextConfig.profiles[sourceProfileName]);
+
+  return nextConfig;
+}
+
+export function renameProfile(config: PkgSwitchConfig, sourceProfileName: string, targetProfileName: string): PkgSwitchConfig {
+  assertProfileName(sourceProfileName);
+  assertProfileName(targetProfileName);
+  assertProfileExists(config, sourceProfileName);
+
+  if (config.profiles[targetProfileName]) {
+    throw new Error(`Profile already exists: ${targetProfileName}`);
+  }
+
+  const nextConfig = structuredClone(config);
+  nextConfig.profiles[targetProfileName] = structuredClone(nextConfig.profiles[sourceProfileName]);
+  delete nextConfig.profiles[sourceProfileName];
+
+  return nextConfig;
+}
+
 export function setProfileValue(
   config: PkgSwitchConfig,
   profileName: string,

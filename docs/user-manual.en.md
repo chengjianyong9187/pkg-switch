@@ -5,7 +5,7 @@
 - **Document ID**: pkg-switch-OPS-EN-001
 - **Type**: User manual
 - **Scope**: Installation, configuration, profile switching, diagnostics, backups, and restore operations
-- **Version**: 1.2
+- **Version**: 1.3
 - **Status**: Stable
 - **Updated At**: 2026-05-02
 
@@ -227,6 +227,18 @@ Remove an inactive profile:
 pkg-switch profile remove staging
 ```
 
+Clone an existing profile:
+
+```bash
+pkg-switch profile clone work staging
+```
+
+Rename a profile:
+
+```bash
+pkg-switch profile rename staging staging-v2
+```
+
 Set a profile value:
 
 ```bash
@@ -246,6 +258,8 @@ Notes:
 
 - Adding an existing profile fails.
 - Removing the active profile fails.
+- `profile clone` copies only the profile patch; it does not expand inherited `common` values into the new profile.
+- `profile rename` updates `state.activeProfile` when the renamed profile is currently active.
 - `profile set` parses `true`, `false`, and `null`; all other values are saved as strings.
 - Use bracket notation when a path segment contains `.` or `/`, for example `npm.extraConfig[//registry.npmjs.org/:_authToken]`.
 - `profile show` masks tokens, auth fields, passwords, usernames, and emails.
@@ -312,6 +326,18 @@ List backups:
 pkg-switch backup list
 ```
 
+Delete a backup:
+
+```bash
+pkg-switch backup delete <backupId>
+```
+
+Keep only the newest N backups:
+
+```bash
+pkg-switch backup prune --keep 5
+```
+
 Restore a backup:
 
 ```bash
@@ -322,6 +348,7 @@ Recommendations:
 
 - Keep `backupBeforeWrite=true`.
 - Run `pkg-switch backup list` before restoring.
+- Run `pkg-switch backup prune --keep 5` periodically to keep the backup directory small.
 - Backups created by newer versions include a state snapshot; restore operations restore that state as well.
 - Run `pkg-switch current` and `pkg-switch doctor` after restore.
 
@@ -402,6 +429,9 @@ pkg-switch --version
 pkg-switch switch personal --dry-run
 pkg-switch switch personal --diff
 pkg-switch profile list
+pkg-switch profile clone personal personal-test
+pkg-switch profile rename personal-test personal-temp
+pkg-switch profile remove personal-temp
 pkg-switch profile show personal
 pkg-switch doctor
 pkg-switch switch personal --no-cache-clean
@@ -415,6 +445,7 @@ Expected result:
 - `pkg-switch --version` prints the installed CLI version.
 - `switch --dry-run` and `switch --diff` do not write rc files and do not print plain-text tokens.
 - `profile list` includes your expected profiles.
+- `profile clone/rename/remove` can maintain temporary profile lifecycles.
 - `profile show` does not print plain-text tokens.
 - `doctor` has no config, registry, or auth errors.
 - `current` shows the profile you just switched to.
@@ -430,5 +461,6 @@ Expected result:
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| v1.3 | 2026-05-02 | Codex | Added profile clone/rename and backup delete/prune instructions |
 | v1.2 | 2026-05-02 | Codex | Added init, profile set/unset, dry-run/diff, pnpm store-dir, and restore state notes |
 | v1.1 | 2026-05-02 | Codex | Removed personal profile names, local paths, and private-environment details; added generic publishing guidance |

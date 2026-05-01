@@ -120,6 +120,30 @@ describe("cli actions", () => {
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
+  it("profile clone/rename 应维护配置并在重命名激活 profile 时同步 state", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+
+    await writeJsonFile(appPaths.stateFile, {
+      activeProfile: "CJY-WORK",
+      lastSwitchStatus: "success"
+    });
+
+    await runCli(["profile", "clone", "CJY-WORK", "CJY-STAGING"], { homeDir: preparedHome });
+    await runCli(["profile", "rename", "CJY-WORK", "CJY-OFFICE"], { homeDir: preparedHome });
+
+    const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
+    const state = (await readJsonFile(appPaths.stateFile)) as { activeProfile?: string };
+    const output = loggedText();
+
+    expect(config.profiles["CJY-STAGING"]).toEqual(config.profiles["CJY-OFFICE"]);
+    expect(config.profiles["CJY-WORK"]).toBeUndefined();
+    expect(state.activeProfile).toBe("CJY-OFFICE");
+    expect(output).toContain("Cloned profile: CJY-WORK -> CJY-STAGING");
+    expect(output).toContain("Renamed profile: CJY-WORK -> CJY-OFFICE");
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
   it("profile remove 当前激活项时应失败且不写回删除", async () => {
     const preparedHome = await prepareHome();
     const appPaths = createAppPaths(preparedHome);
@@ -298,6 +322,29 @@ describe("cli actions", () => {
     expect(output).toContain(backupId);
     expect(output).toContain("2026-01-01T00:00:00.000Z");
     expect(output).toContain("files=1");
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("backup delete/prune 应删除指定备份并裁剪旧备份", async () => {
+    const preparedHome = await prepareHome();
+    const appPaths = createAppPaths(preparedHome);
+    const npmrcFile = path.join(preparedHome, ".npmrc");
+
+    await writeFile(npmrcFile, "registry=https://old.example.com/\n", "utf8");
+    const deleteBackupId = await createBackup(appPaths.backupDir, [{ filePath: npmrcFile }], new Date("2026-01-01T00:00:00.000Z"));
+    const olderBackupId = await createBackup(appPaths.backupDir, [{ filePath: npmrcFile }], new Date("2026-01-02T00:00:00.000Z"));
+    const newerBackupId = await createBackup(appPaths.backupDir, [{ filePath: npmrcFile }], new Date("2026-01-03T00:00:00.000Z"));
+
+    await runCli(["backup", "delete", deleteBackupId], { homeDir: preparedHome });
+    await runCli(["backup", "prune", "--keep", "1"], { homeDir: preparedHome });
+
+    const output = loggedText();
+
+    await expect(readFile(path.join(appPaths.backupDir, deleteBackupId, "manifest.json"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(path.join(appPaths.backupDir, olderBackupId, "manifest.json"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(path.join(appPaths.backupDir, newerBackupId, "manifest.json"), "utf8")).resolves.toContain(newerBackupId);
+    expect(output).toContain(`Deleted backup: ${deleteBackupId}`);
+    expect(output).toContain(`Pruned backups: ${olderBackupId}`);
     expect(errorSpy).not.toHaveBeenCalled();
   });
 });

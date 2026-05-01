@@ -1,12 +1,21 @@
 // ts
 import { cac } from "cac";
 import os from "node:os";
-import { listProfileBackups } from "./core/backup-service.js";
+import { deleteProfileBackup, listProfileBackups, pruneProfileBackups } from "./core/backup-service.js";
 import { getCurrentStatus } from "./core/current-service.js";
 import type { DoctorInput } from "./core/doctor-service.js";
 import { runDoctor } from "./core/doctor-service.js";
 import { initConfig } from "./core/init-service.js";
-import { addProfile, listProfiles, removeProfile, setProfileValue, showProfile, unsetProfileValue } from "./core/profile-service.js";
+import {
+  addProfile,
+  cloneProfile,
+  listProfiles,
+  removeProfile,
+  renameProfile,
+  setProfileValue,
+  showProfile,
+  unsetProfileValue
+} from "./core/profile-service.js";
 import { restoreProfileBackup } from "./core/restore-service.js";
 import { previewSwitchProfile } from "./core/switch-preview-service.js";
 import { switchProfile } from "./core/switch-service.js";
@@ -33,6 +42,10 @@ interface InitCommandOptions {
   force?: boolean;
 }
 
+interface BackupCommandOptions {
+  keep?: string | number;
+}
+
 const cacheCleanModes: CacheCleanMode[] = ["smart", "full", "none"];
 
 async function readConfig(homeDir: string): Promise<PkgSwitchConfig> {
@@ -47,6 +60,10 @@ async function writeConfig(homeDir: string, config: PkgSwitchConfig): Promise<vo
   await writeJsonFile(createAppPaths(homeDir).configFile, config);
 }
 
+async function writeState(homeDir: string, state: PkgSwitchState): Promise<void> {
+  await writeJsonFile(createAppPaths(homeDir).stateFile, state);
+}
+
 function parseCacheCleanMode(value: string): CacheCleanMode {
   if (cacheCleanModes.includes(value as CacheCleanMode)) {
     return value as CacheCleanMode;
@@ -57,6 +74,20 @@ function parseCacheCleanMode(value: string): CacheCleanMode {
 
 function hasArg(argv: string[], argName: string): boolean {
   return argv.some((arg) => arg === argName || arg.startsWith(`${argName}=`));
+}
+
+function parseKeepCount(value: string | number | undefined): number {
+  if (value === undefined || value === "") {
+    throw new Error("backup keep count is required");
+  }
+
+  const keep = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isInteger(keep) || keep < 0) {
+    throw new Error(`Invalid backup keep count: ${String(value)}`);
+  }
+
+  return keep;
 }
 
 export function createCli(options: CliRuntimeOptions = {}) {
@@ -160,7 +191,10 @@ export function createCli(options: CliRuntimeOptions = {}) {
     console.log(`Restored backup: ${result.backupId}`);
   });
 
-  cli.command("backup <action>", "管理备份：list").action(async (action: string) => {
+  cli
+    .command("backup <action> [backupId]", "管理备份：list、delete <backupId>、prune --keep <n>")
+    .option("--keep <count>", "prune 时保留最新几个备份")
+    .action(async (action: string, backupId?: string, commandOptions: BackupCommandOptions = {}) => {
     if (action === "list") {
       const backups = await listProfileBackups({ homeDir });
 
@@ -176,11 +210,33 @@ export function createCli(options: CliRuntimeOptions = {}) {
       return;
     }
 
+    if (action === "delete") {
+      if (!backupId || !backupId.trim()) {
+        throw new Error("backup id is required");
+      }
+
+      const result = await deleteProfileBackup({ homeDir, backupId });
+      console.log(`Deleted backup: ${result.backupId}`);
+      return;
+    }
+
+    if (action === "prune") {
+      const result = await pruneProfileBackups({ homeDir, keep: parseKeepCount(commandOptions.keep) });
+
+      if (result.deletedBackupIds.length === 0) {
+        console.log("No backups pruned");
+        return;
+      }
+
+      console.log(`Pruned backups: ${result.deletedBackupIds.join(", ")}`);
+      return;
+    }
+
     throw new Error(`Unknown backup action: ${action}`);
   });
 
   cli
-    .command("profile <action> [name] [path] [value]", "管理 profile：list、show、add、remove、set、unset")
+    .command("profile <action> [name] [path] [value]", "管理 profile：list、show、add、remove、set、unset、clone、rename")
     .action(async (action: string, name?: string, configPath?: string, value?: string) => {
       if (action === "list") {
         const names = listProfiles(await readConfig(homeDir));
@@ -218,6 +274,43 @@ export function createCli(options: CliRuntimeOptions = {}) {
 
         await writeConfig(homeDir, removeProfile(await readConfig(homeDir), name, await readState(homeDir)));
         console.log(`Removed profile: ${name}`);
+        return;
+      }
+
+      if (action === "clone") {
+        if (!name || !name.trim()) {
+          throw new Error("source profile name is required");
+        }
+
+        if (!configPath || !configPath.trim()) {
+          throw new Error("target profile name is required");
+        }
+
+        await writeConfig(homeDir, cloneProfile(await readConfig(homeDir), name, configPath));
+        console.log(`Cloned profile: ${name} -> ${configPath}`);
+        return;
+      }
+
+      if (action === "rename") {
+        if (!name || !name.trim()) {
+          throw new Error("source profile name is required");
+        }
+
+        if (!configPath || !configPath.trim()) {
+          throw new Error("target profile name is required");
+        }
+
+        const state = await readState(homeDir);
+        await writeConfig(homeDir, renameProfile(await readConfig(homeDir), name, configPath));
+
+        if (state?.activeProfile === name) {
+          await writeState(homeDir, {
+            ...state,
+            activeProfile: configPath
+          });
+        }
+
+        console.log(`Renamed profile: ${name} -> ${configPath}`);
         return;
       }
 

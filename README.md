@@ -68,6 +68,8 @@ pkg-switch init
 pkg-switch profile list
 pkg-switch profile show work
 pkg-switch profile add staging
+pkg-switch profile clone work staging
+pkg-switch profile rename staging staging-v2
 pkg-switch profile set personal npm.registry https://registry.npmmirror.com/
 pkg-switch profile set personal "npm.extraConfig[//registry.npmjs.org/:_authToken]" "YOUR_NPMJS_TOKEN"
 pkg-switch profile unset personal npm.authToken
@@ -79,6 +81,8 @@ pkg-switch switch personal --no-cache-clean
 pkg-switch switch work --cache-clean smart
 pkg-switch doctor
 pkg-switch backup list
+pkg-switch backup delete <backupId>
+pkg-switch backup prune --keep 5
 pkg-switch restore <backupId>
 ```
 

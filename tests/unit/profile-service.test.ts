@@ -1,6 +1,15 @@
 // ts
 import { describe, expect, it } from "vitest";
-import { addProfile, listProfiles, removeProfile, setProfileValue, showProfile, unsetProfileValue } from "../../src/core/profile-service.js";
+import {
+  addProfile,
+  cloneProfile,
+  listProfiles,
+  removeProfile,
+  renameProfile,
+  setProfileValue,
+  showProfile,
+  unsetProfileValue
+} from "../../src/core/profile-service.js";
 import type { PkgSwitchConfig } from "../../src/shared/types.js";
 
 describe("profile service", () => {
@@ -108,5 +117,30 @@ describe("profile service", () => {
 
     expect(result.profiles["CJY-PERSONAL"].npm).not.toHaveProperty("authToken");
     expect(config.profiles["CJY-PERSONAL"].npm).toHaveProperty("authToken");
+  });
+
+  it("应复制已有 profile 为新 profile 且不修改原配置对象", () => {
+    const result = cloneProfile(config, "CJY-WORK", "CJY-STAGING");
+
+    expect(result.profiles["CJY-STAGING"]).toEqual(config.profiles["CJY-WORK"]);
+    expect(result.profiles["CJY-STAGING"]).not.toBe(config.profiles["CJY-WORK"]);
+    expect(config.profiles["CJY-STAGING"]).toBeUndefined();
+  });
+
+  it("复制不存在或目标已存在的 profile 时应抛出明确错误", () => {
+    expect(() => cloneProfile(config, "MISSING", "CJY-STAGING")).toThrow("Profile not found: MISSING");
+    expect(() => cloneProfile(config, "CJY-WORK", "CJY-PERSONAL")).toThrow("Profile already exists: CJY-PERSONAL");
+  });
+
+  it("应重命名已有 profile 并保持其它配置不变", () => {
+    const result = renameProfile(config, "CJY-PERSONAL", "CJY-HOME");
+
+    expect(result.profiles["CJY-HOME"]).toEqual(config.profiles["CJY-PERSONAL"]);
+    expect(result.profiles["CJY-PERSONAL"]).toBeUndefined();
+    expect(result.profiles["CJY-WORK"]).toEqual(config.profiles["CJY-WORK"]);
+  });
+
+  it("重命名到已存在 profile 时应抛出明确错误", () => {
+    expect(() => renameProfile(config, "CJY-WORK", "CJY-PERSONAL")).toThrow("Profile already exists: CJY-PERSONAL");
   });
 });

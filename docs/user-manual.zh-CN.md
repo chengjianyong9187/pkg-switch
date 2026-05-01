@@ -5,7 +5,7 @@
 - **文档编号**: pkg-switch-OPS-ZH-001
 - **文档类型**: 操作手册
 - **适用范围**: `pkg-switch` 安装、配置、profile 切换、诊断、备份与恢复
-- **当前版本**: 1.2
+- **当前版本**: 1.3
 - **状态**: 正式
 - **更新日期**: 2026-05-02
 
@@ -226,6 +226,18 @@ pkg-switch profile add staging
 pkg-switch profile remove staging
 ```
 
+复制已有 profile：
+
+```bash
+pkg-switch profile clone work staging
+```
+
+重命名 profile：
+
+```bash
+pkg-switch profile rename staging staging-v2
+```
+
 设置 profile 字段：
 
 ```bash
@@ -245,6 +257,8 @@ pkg-switch profile unset personal "npm.extraConfig[//registry.npmjs.org/:_authTo
 
 - 新增同名 profile 会失败。
 - 删除当前激活 profile 会失败。
+- `profile clone` 复制的是 profile 自身差异配置，不会把 `common` 展开写入新 profile。
+- `profile rename` 如果重命名的是当前激活 profile，会同步更新 state 中的 `activeProfile`。
 - `profile set` 支持 `true`、`false`、`null` 的简单值解析，其它值按字符串保存。
 - 如果路径中某一段包含 `.` 或 `/`，使用方括号写法，例如 `npm.extraConfig[//registry.npmjs.org/:_authToken]`。
 - `profile show` 会脱敏 token、auth、password、username、email 等敏感字段。
@@ -311,6 +325,18 @@ pkg-switch doctor
 pkg-switch backup list
 ```
 
+删除指定备份：
+
+```bash
+pkg-switch backup delete <backupId>
+```
+
+只保留最新 N 个备份：
+
+```bash
+pkg-switch backup prune --keep 5
+```
+
 恢复指定备份：
 
 ```bash
@@ -321,6 +347,7 @@ pkg-switch restore <backupId>
 
 - 保持 `backupBeforeWrite=true`。
 - 恢复前先执行 `pkg-switch backup list` 确认备份编号。
+- 定期执行 `pkg-switch backup prune --keep 5` 可避免备份目录长期膨胀。
 - 新版本创建的备份会保存切换前的 state 快照，恢复时会同步还原 state。
 - 恢复后执行 `pkg-switch current` 和 `pkg-switch doctor` 复核状态。
 
@@ -401,6 +428,9 @@ pkg-switch --version
 pkg-switch switch personal --dry-run
 pkg-switch switch personal --diff
 pkg-switch profile list
+pkg-switch profile clone personal personal-test
+pkg-switch profile rename personal-test personal-temp
+pkg-switch profile remove personal-temp
 pkg-switch profile show personal
 pkg-switch doctor
 pkg-switch switch personal --no-cache-clean
@@ -414,6 +444,7 @@ pkg-switch backup list
 - `pkg-switch --version` 能展示当前 CLI 版本。
 - `switch --dry-run` 和 `switch --diff` 不写入 rc 文件，且不输出明文 token。
 - `profile list` 包含预期 profile。
+- `profile clone/rename/remove` 可以完成临时 profile 生命周期维护。
 - `profile show` 不输出明文 token。
 - `doctor` 不出现配置读取、registry、鉴权相关 error。
 - `current` 显示刚切换的 profile。
@@ -429,5 +460,6 @@ pkg-switch backup list
 
 | 版本 | 日期 | 作者 | 变更内容 |
 | --- | --- | --- | --- |
+| v1.3 | 2026-05-02 | Codex | 补充 profile clone/rename 与 backup delete/prune 操作说明 |
 | v1.2 | 2026-05-02 | Codex | 补充 init、profile set/unset、dry-run/diff、pnpm store-dir 与 restore state 说明 |
 | v1.1 | 2026-05-02 | Codex | 去除个人化 profile、本机路径和私有环境信息，补充通用发布配置说明 |

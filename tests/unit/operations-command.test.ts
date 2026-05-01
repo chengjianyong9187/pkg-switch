@@ -9,6 +9,7 @@ describe("operations commands", () => {
 
     expect(commandNames).toContain("doctor");
     expect(commandNames).toContain("restore <backupId>");
+    expect(commandNames).toContain("backup <action> [backupId]");
     expect(commandNames).toContain("profile <action> [name] [path] [value]");
   });
 });
