@@ -33,7 +33,8 @@ async function defaultCommandExists(commandName: string): Promise<boolean> {
   try {
     await execFileAsync(commandName, ["--version"], {
       timeout: 5000,
-      windowsHide: true
+      windowsHide: true,
+      shell: process.platform === "win32"
     });
     return true;
   } catch {

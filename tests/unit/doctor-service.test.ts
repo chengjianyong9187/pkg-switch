@@ -1,5 +1,5 @@
 // ts
-import { mkdtemp, rm } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -9,13 +9,30 @@ import { writeJsonFile } from "../../src/storage/config-repo.js";
 
 describe("runDoctor", () => {
   let homeDir: string | undefined;
+  let originalPath: string | undefined;
 
   afterEach(async () => {
+    if (originalPath !== undefined) {
+      process.env.PATH = originalPath;
+      originalPath = undefined;
+    }
+
     if (homeDir) {
       await rm(homeDir, { force: true, recursive: true });
       homeDir = undefined;
     }
   });
+
+  async function writeFakeCommand(binDir: string, commandName: string): Promise<void> {
+    if (process.platform === "win32") {
+      await writeFile(path.join(binDir, `${commandName}.cmd`), "@echo off\r\necho 1.0.0\r\n", "utf8");
+      return;
+    }
+
+    const commandFile = path.join(binDir, commandName);
+    await writeFile(commandFile, "#!/bin/sh\necho 1.0.0\n", "utf8");
+    await chmod(commandFile, 0o755);
+  }
 
   it("应返回目录写权限和 npm、pnpm、yarn 的可用性检查结果", async () => {
     homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-doctor-"));
@@ -32,6 +49,27 @@ describe("runDoctor", () => {
         expect.objectContaining({ name: "npm-command", status: "ok" }),
         expect.objectContaining({ name: "pnpm-command", status: "ok" }),
         expect.objectContaining({ name: "yarn-command", status: "warning" })
+      ])
+    );
+  });
+
+  it("默认命令探测应能识别 PATH 中的包管理器命令", async () => {
+    homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-doctor-path-"));
+    const binDir = path.join(homeDir, "bin");
+
+    await mkdir(binDir);
+    await Promise.all(["npm", "pnpm", "yarn"].map((commandName) => writeFakeCommand(binDir, commandName)));
+
+    originalPath = process.env.PATH;
+    process.env.PATH = binDir;
+
+    const result = await runDoctor({ homeDir });
+
+    expect(result.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "npm-command", status: "ok" }),
+        expect.objectContaining({ name: "pnpm-command", status: "ok" }),
+        expect.objectContaining({ name: "yarn-command", status: "ok" })
       ])
     );
   });

@@ -1,11 +1,41 @@
 {
   "name": "pkg-switch",
   "version": "0.1.0",
-  "private": true,
+  "description": "Switch npm, yarn and pnpm user-level package manager profiles from a single CLI.",
   "type": "module",
   "packageManager": "pnpm@10.31.0",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/chengjianyong9187/pkg-switch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chengjianyong9187/pkg-switch/issues"
+  },
+  "homepage": "https://github.com/chengjianyong9187/pkg-switch#readme",
+  "keywords": [
+    "npm",
+    "pnpm",
+    "yarn",
+    "registry",
+    "profile",
+    "cli"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "docs/pkg-switch-user-manual.md",
+    "examples/config.example.json",
+    "examples/output.npmrc",
+    "examples/output.yarnrc.yml"
+  ],
   "bin": {
     "pkg-switch": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/ensure-bin-shebang.mjs",

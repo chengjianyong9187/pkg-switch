@@ -931,3 +931,46 @@ pnpm lint
 pnpm test
 pnpm build
 ```
+
+### Task 15: 补齐安装部署手册与公开发布准备
+
+**Files:**
+- Create: `docs/pkg-switch-user-manual.md`
+- Modify: `README.md`
+- Modify: `package.json`
+- Modify: `src/core/doctor-service.ts`
+- Modify: `src/managers/cache-cleaner.ts`
+- Modify: `src/cli.ts`
+- Test: `tests/unit/package-metadata.test.ts`
+- Test: `tests/unit/doctor-service.test.ts`
+- Test: `tests/unit/cache-cleaner.test.ts`
+
+- [x] **Step 1: 形成安装部署与 profile 操作手册**
+
+覆盖本机 CLI 状态、全新 PC 部署、配置文件结构、`CJY-WORK` / `CJY-PERSONAL` 配置样例、profile 管理、切换、诊断、备份恢复与常见问题。
+
+- [x] **Step 2: 准备 npm 公开发布元数据**
+
+移除 `private:true`，补齐 description、repository、homepage、bugs、keywords、files、engines、publishConfig，并增加发布元数据测试。
+
+- [x] **Step 3: 修复 Windows 下命令探测与缓存清理执行**
+
+Windows 下通过 shell 执行包管理器命令，兼容 PATH 中的 `npm.cmd`、`pnpm.cmd`、`yarn.cmd`。
+
+- [x] **Step 4: 执行发布前验证**
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+npm pack --dry-run --registry=https://registry.npmjs.org/
+```
+
+- [ ] **Step 5: 推送 GitHub 并发布 npmjs**
+
+```bash
+git push origin master
+npm publish --registry=https://registry.npmjs.org/
+```
+
+若本机未登录 npmjs，需要先执行 `npm login --registry=https://registry.npmjs.org/` 或配置 npm token 后再发布。

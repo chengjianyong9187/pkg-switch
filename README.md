@@ -4,12 +4,32 @@
 
 ## 安装与构建
 
+公开包发布后，可直接安装 CLI：
+
+```bash
+npm install --global pkg-switch
+pkg-switch --help
+```
+
+或使用 pnpm：
+
+```bash
+pnpm add --global pkg-switch
+pkg-switch --help
+```
+
+本地开发安装：
+
 ```bash
 pnpm install
 pnpm build
+pnpm link --global
+pkg-switch --help
 ```
 
 构建后可执行入口为 `dist/index.js`，包入口命令名为 `pkg-switch`。
+
+完整部署、全新 PC 配置和 profile 操作命令见 [安装部署与操作手册](docs/pkg-switch-user-manual.md)。
 
 ## 配置文件
 
@@ -96,11 +116,14 @@ pkg-switch restore backup-2026-01-01T00-00-00-000Z
 - 已完成 `switch --no-cache-clean` 与 `switch --cache-clean smart|full|none` 单次覆盖参数
 - 已完成 `backup list` 备份摘要列表，恢复前可直接查看可用 `backupId`
 - 已完成更完整的 doctor 配置、状态、registry 与鉴权一致性检查
+- 已完成 Windows 下 npm/pnpm/yarn 命令探测与缓存清理的 `.cmd` 兼容处理
 - 已完成示例配置、样例输出与 CLI 使用说明
-- 下一步：基于本机真实配置试运行 `doctor` / `backup list` / `profile add/remove` / `switch`
+- 已完成安装部署与 profile 操作手册
+- 下一步：发布 GitHub 与 npmjs 公共包
 
 文档入口：
 
+- `docs/pkg-switch-user-manual.md`
 - `docs/superpowers/specs/2026-04-29-package-manager-profile-switch-design.md`
 - `docs/superpowers/plans/2026-04-29-package-manager-profile-switch.md`
 - `examples/config.example.json`

@@ -139,48 +139,50 @@ export function createCli(options: CliRuntimeOptions = {}) {
     throw new Error(`Unknown backup action: ${action}`);
   });
 
-  cli.command("profile <action> [name]", "管理 profile：list 或 show <name>").action(async (action: string, name?: string) => {
-    if (action === "list") {
-      const names = listProfiles(await readConfig(homeDir));
+  cli
+    .command("profile <action> [name]", "管理 profile：list、show <name>、add <name>、remove <name>")
+    .action(async (action: string, name?: string) => {
+      if (action === "list") {
+        const names = listProfiles(await readConfig(homeDir));
 
-      for (const profileName of names) {
-        console.log(profileName);
+        for (const profileName of names) {
+          console.log(profileName);
+        }
+
+        return;
       }
 
-      return;
-    }
+      if (action === "show") {
+        if (!name || !name.trim()) {
+          throw new Error("profile name is required");
+        }
 
-    if (action === "show") {
-      if (!name || !name.trim()) {
-        throw new Error("profile name is required");
+        console.log(JSON.stringify(showProfile(await readConfig(homeDir), name), null, 2));
+        return;
       }
 
-      console.log(JSON.stringify(showProfile(await readConfig(homeDir), name), null, 2));
-      return;
-    }
+      if (action === "add") {
+        if (!name || !name.trim()) {
+          throw new Error("profile name is required");
+        }
 
-    if (action === "add") {
-      if (!name || !name.trim()) {
-        throw new Error("profile name is required");
+        await writeConfig(homeDir, addProfile(await readConfig(homeDir), name));
+        console.log(`Added profile: ${name}`);
+        return;
       }
 
-      await writeConfig(homeDir, addProfile(await readConfig(homeDir), name));
-      console.log(`Added profile: ${name}`);
-      return;
-    }
+      if (action === "remove") {
+        if (!name || !name.trim()) {
+          throw new Error("profile name is required");
+        }
 
-    if (action === "remove") {
-      if (!name || !name.trim()) {
-        throw new Error("profile name is required");
+        await writeConfig(homeDir, removeProfile(await readConfig(homeDir), name, await readState(homeDir)));
+        console.log(`Removed profile: ${name}`);
+        return;
       }
 
-      await writeConfig(homeDir, removeProfile(await readConfig(homeDir), name, await readState(homeDir)));
-      console.log(`Removed profile: ${name}`);
-      return;
-    }
-
-    throw new Error(`Unknown profile action: ${action}`);
-  });
+      throw new Error(`Unknown profile action: ${action}`);
+    });
 
   cli.help();
 

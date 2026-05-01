@@ -72,7 +72,8 @@ function uniqueTargets(targets: WriteTarget[]): WriteTarget[] {
 async function defaultRunCommand(command: string, args: string[]): Promise<void> {
   await execFileAsync(command, args, {
     timeout: 30_000,
-    windowsHide: true
+    windowsHide: true,
+    shell: process.platform === "win32"
   });
 }
 
