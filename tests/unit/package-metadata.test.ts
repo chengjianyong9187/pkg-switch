@@ -24,7 +24,9 @@ describe("package metadata", () => {
 
     expect(packageJson.private).not.toBe(true);
     expect(packageJson.bin?.["pkg-switch"]).toBe("dist/index.js");
-    expect(packageJson.files).toEqual(expect.arrayContaining(["dist", "README.md"]));
+    expect(packageJson.files).toEqual(
+      expect.arrayContaining(["dist", "README.md", "README.zh-CN.md", "docs/user-manual.en.md", "docs/user-manual.zh-CN.md"])
+    );
     expect(packageJson.repository).toEqual({
       type: "git",
       url: "git+ssh://git@github.com/chengjianyong9187/pkg-switch.git"

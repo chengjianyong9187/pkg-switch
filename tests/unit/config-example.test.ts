@@ -17,19 +17,19 @@ describe("config example", () => {
     }
   });
 
-  it("应包含 CJY-WORK 与 CJY-PERSONAL，并可切换生成样例输出", async () => {
+  it("应包含通用 work 与 personal profile，并可切换生成样例输出", async () => {
     const projectRoot = path.resolve(import.meta.dirname, "../..");
     const config = JSON.parse(await readFile(path.join(projectRoot, "examples", "config.example.json"), "utf8")) as {
       profiles: Record<string, unknown>;
     };
 
-    expect(Object.keys(config.profiles)).toEqual(expect.arrayContaining(["CJY-WORK", "CJY-PERSONAL"]));
+    expect(Object.keys(config.profiles)).toEqual(expect.arrayContaining(["work", "personal"]));
 
     homeDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-example-"));
     const appPaths = createAppPaths(homeDir);
 
     await writeJsonFile(appPaths.configFile, config);
-    await switchProfile({ homeDir, profileName: "CJY-WORK", skipCacheClean: true });
+    await switchProfile({ homeDir, profileName: "work", skipCacheClean: true });
 
     await expect(readFile(path.join(homeDir, ".npmrc"), "utf8")).resolves.toBe(
       await readFile(path.join(projectRoot, "examples", "output.npmrc"), "utf8")

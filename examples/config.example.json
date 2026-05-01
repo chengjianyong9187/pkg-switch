@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 1,
-    "updatedAt": "2026-04-30T10:00:00+08:00"
+    "updatedAt": "2026-05-02T00:00:00+00:00"
   },
   "defaults": {
     "writeTargets": ["npm", "yarn"],
@@ -12,36 +12,40 @@
   "common": {
     "npm": {
       "registry": "https://registry.npmmirror.com/",
-      "cache": "D:/DevCaches/npm-cache",
+      "cache": "${HOME}/.cache/npm",
       "strictSsl": true
     },
     "pnpm": {
-      "storeDir": "D:/DevCaches/pnpm-store"
+      "storeDir": "${HOME}/.local/share/pnpm/store"
     },
     "yarn": {
       "nodeLinker": "node-modules"
     }
   },
   "profiles": {
-    "CJY-WORK": {
+    "work": {
       "npm": {
-        "registry": "https://nexus.example.com/repository/npm-group/",
+        "registry": "https://registry.example.com/repository/npm-group/",
         "alwaysAuth": true,
-        "authToken": "plain-text-token"
+        "authToken": "<private-registry-token>"
       },
       "scopes": {
-        "@company": {
-          "registry": "https://nexus.example.com/repository/npm-group/"
+        "@example": {
+          "registry": "https://registry.example.com/repository/npm-group/"
         }
       }
     },
-    "CJY-PERSONAL": {
+    "personal": {
       "npm": {
+        "registry": "https://registry.npmmirror.com/",
         "alwaysAuth": false,
-        "authToken": null
+        "authToken": null,
+        "extraConfig": {
+          "//registry.npmjs.org/:_authToken": "<npmjs-publish-token>"
+        }
       },
       "scopes": {
-        "@company": null
+        "@example": null
       }
     }
   }

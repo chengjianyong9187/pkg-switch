@@ -1,6 +1,6 @@
 {
   "name": "pkg-switch",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Switch npm, yarn and pnpm user-level package manager profiles from a single CLI.",
   "type": "module",
   "packageManager": "pnpm@10.31.0",
@@ -23,7 +23,9 @@
   "files": [
     "dist",
     "README.md",
-    "docs/pkg-switch-user-manual.md",
+    "README.zh-CN.md",
+    "docs/user-manual.en.md",
+    "docs/user-manual.zh-CN.md",
     "examples/config.example.json",
     "examples/output.npmrc",
     "examples/output.yarnrc.yml"
