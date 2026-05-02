@@ -1,6 +1,7 @@
 // ts
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "../../src/index.js";
+import { pkgSwitchVersion } from "../../src/version.js";
 
 describe("runCli", () => {
   const originalExitCode = process.exitCode;
@@ -33,7 +34,7 @@ describe("runCli", () => {
     runCli(["--version"]);
 
     const output = logSpy.mock.calls.map((call) => call.join(" ")).join("\n");
-    expect(output).toContain("pkg-switch/0.2.0");
+    expect(output).toContain(`pkg-switch/${pkgSwitchVersion}`);
     expect(errorSpy).not.toHaveBeenCalled();
     expect(process.exitCode).toBeUndefined();
   });

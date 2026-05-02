@@ -1,6 +1,6 @@
 {
   "name": "pkg-switch",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Switch npm, yarn and pnpm user-level package manager profiles from a single CLI.",
   "type": "module",
   "license": "MIT",

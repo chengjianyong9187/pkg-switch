@@ -44,7 +44,9 @@ describe("package metadata", () => {
       url: "git+ssh://git@github.com/chengjianyong9187/pkg-switch.git"
     });
     expect(packageJson.publishConfig?.registry).toBe("https://registry.npmjs.org/");
-    await expect(readFile(path.join(projectRoot, "CHANGELOG.md"), "utf8")).resolves.toContain("## [0.2.0]");
+    const changelog = await readFile(path.join(projectRoot, "CHANGELOG.md"), "utf8");
+    expect(changelog).toContain("## [0.2.1]");
+    expect(changelog).toContain("## [0.2.0]");
     await expect(readFile(path.join(projectRoot, "LICENSE"), "utf8")).resolves.toContain("MIT License");
   });
 });
