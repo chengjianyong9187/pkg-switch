@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "Switch npm, yarn and pnpm user-level package manager profiles from a single CLI.",
   "type": "module",
+  "license": "MIT",
   "packageManager": "pnpm@10.31.0",
   "repository": {
     "type": "git",
@@ -24,8 +25,12 @@
     "dist",
     "README.md",
     "README.zh-CN.md",
+    "CHANGELOG.md",
+    "LICENSE",
     "docs/user-manual.en.md",
     "docs/user-manual.zh-CN.md",
+    "docs/release-notes.en.md",
+    "docs/release-notes.zh-CN.md",
     "examples/config.example.json",
     "examples/output.npmrc",
     "examples/output.yarnrc.yml"

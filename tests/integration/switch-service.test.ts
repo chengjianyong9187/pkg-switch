@@ -40,7 +40,7 @@ describe("switchProfile", () => {
         }
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             registry: "https://nexus.example.com/repository/npm-group/",
             alwaysAuth: true,
@@ -57,7 +57,7 @@ describe("switchProfile", () => {
     await writeFile(path.join(homeDir, ".npmrc"), "registry=https://old.example.com/\n", "utf8");
     await writeFile(path.join(homeDir, ".yarnrc.yml"), "npmRegistryServer: https://old.example.com/\n", "utf8");
 
-    const result = await switchProfile({ homeDir, profileName: "CJY-WORK", skipCacheClean: true });
+    const result = await switchProfile({ homeDir, profileName: "work", skipCacheClean: true });
 
     const npmrc = await readFile(path.join(homeDir, ".npmrc"), "utf8");
     const yarnrc = await readFile(path.join(homeDir, ".yarnrc.yml"), "utf8");
@@ -70,7 +70,7 @@ describe("switchProfile", () => {
     expect(npmrc).toContain("_authToken=plain-text-token");
     expect(yarnrc).toContain("nodeLinker: node-modules");
     expect(yarnrc).toContain("npmRegistryServer: https://nexus.example.com/repository/npm-group/");
-    expect(state.activeProfile).toBe("CJY-WORK");
+    expect(state.activeProfile).toBe("work");
     expect(state.lastBackupId).toBe(result.backupId);
     expect(state.lastWriteTargets).toEqual(["npm", "yarn"]);
     expect(state.lastSwitchStatus).toBe("success");
@@ -98,7 +98,7 @@ describe("switchProfile", () => {
         cacheCleanMode: "smart"
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             registry: "https://nexus.example.com/repository/npm-group/"
           }
@@ -108,7 +108,7 @@ describe("switchProfile", () => {
     await writeFile(path.join(homeDir, ".npmrc"), "registry=https://old.example.com/\n", "utf8");
 
     const result = await switchProfile(
-      { homeDir, profileName: "CJY-WORK" },
+      { homeDir, profileName: "work" },
       {
         runCacheCommand: async () => {
           throw new Error("cache clean failed");
@@ -122,7 +122,7 @@ describe("switchProfile", () => {
     expect(result.status).toBe("warning");
     expect(result.cacheClean?.status).toBe("warning");
     expect(npmrc).toContain("registry=https://nexus.example.com/repository/npm-group/");
-    expect(state.activeProfile).toBe("CJY-WORK");
+    expect(state.activeProfile).toBe("work");
     expect(state.lastSwitchStatus).toBe("warning");
   });
 
@@ -142,7 +142,7 @@ describe("switchProfile", () => {
         cacheCleanMode: "none"
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             registry: "https://nexus.example.com/repository/npm-group/"
           }
@@ -151,7 +151,7 @@ describe("switchProfile", () => {
     });
 
     const result = await switchProfile(
-      { homeDir, profileName: "CJY-WORK", cacheCleanModeOverride: "smart" },
+      { homeDir, profileName: "work", cacheCleanModeOverride: "smart" },
       {
         runCacheCommand: async (command, args) => {
           commands.push({ command, args });

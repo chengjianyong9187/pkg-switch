@@ -37,10 +37,10 @@ describe("config-repo", () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "pkg-switch-repo-"));
     const filePath = path.join(tempDir, ".pkg-switch", "state.json");
 
-    await writeJsonFile(filePath, { activeProfile: "CJY-WORK" });
+    await writeJsonFile(filePath, { activeProfile: "work" });
 
     await expect(readJsonFile<{ activeProfile: string }>(filePath)).resolves.toEqual({
-      activeProfile: "CJY-WORK"
+      activeProfile: "work"
     });
     await expect(readFile(filePath, "utf8")).resolves.toContain("\n");
   });

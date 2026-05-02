@@ -453,6 +453,8 @@ Expected result:
 ## 12. Related Documents
 
 - [中文操作手册](user-manual.zh-CN.md)
+- [English Release Notes](release-notes.en.md)
+- [P0 / P1 版本变更说明](release-notes.zh-CN.md)
 - [README](../README.md)
 - [中文 README](../README.zh-CN.md)
 - [Example config](../examples/config.example.json)

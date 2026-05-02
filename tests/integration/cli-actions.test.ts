@@ -48,13 +48,13 @@ describe("cli actions", () => {
         }
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             registry: "https://nexus.example.com/repository/npm-group/",
             authToken: "plain-text-token"
           }
         },
-        "CJY-PERSONAL": {
+        "personal": {
           npm: {
             authToken: null
           }
@@ -73,11 +73,11 @@ describe("cli actions", () => {
     const preparedHome = await prepareHome();
 
     await runCli(["profile", "list"], { homeDir: preparedHome });
-    await runCli(["profile", "show", "CJY-WORK"], { homeDir: preparedHome });
+    await runCli(["profile", "show", "work"], { homeDir: preparedHome });
 
     const output = loggedText();
-    expect(output).toContain("CJY-PERSONAL");
-    expect(output).toContain("CJY-WORK");
+    expect(output).toContain("personal");
+    expect(output).toContain("work");
     expect(output).toContain("pla***ken");
     expect(output).not.toContain("plain-text-token");
     expect(errorSpy).not.toHaveBeenCalled();
@@ -87,15 +87,15 @@ describe("cli actions", () => {
     const preparedHome = await prepareHome();
     const appPaths = createAppPaths(preparedHome);
 
-    await runCli(["profile", "add", "CJY-TEST"], { homeDir: preparedHome });
-    await runCli(["profile", "remove", "CJY-TEST"], { homeDir: preparedHome });
+    await runCli(["profile", "add", "test-profile"], { homeDir: preparedHome });
+    await runCli(["profile", "remove", "test-profile"], { homeDir: preparedHome });
 
     const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
     const output = loggedText();
 
-    expect(config.profiles["CJY-TEST"]).toBeUndefined();
-    expect(output).toContain("Added profile: CJY-TEST");
-    expect(output).toContain("Removed profile: CJY-TEST");
+    expect(config.profiles["test-profile"]).toBeUndefined();
+    expect(output).toContain("Added profile: test-profile");
+    expect(output).toContain("Removed profile: test-profile");
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
@@ -103,19 +103,19 @@ describe("cli actions", () => {
     const preparedHome = await prepareHome();
     const appPaths = createAppPaths(preparedHome);
 
-    await runCli(["profile", "set", "CJY-PERSONAL", "npm.extraConfig[//registry.npmjs.org/:_authToken]", "plain-text-token"], {
+    await runCli(["profile", "set", "personal", "npm.extraConfig[//registry.npmjs.org/:_authToken]", "plain-text-token"], {
       homeDir: preparedHome
     });
-    await runCli(["profile", "unset", "CJY-PERSONAL", "npm.extraConfig[//registry.npmjs.org/:_authToken]"], {
+    await runCli(["profile", "unset", "personal", "npm.extraConfig[//registry.npmjs.org/:_authToken]"], {
       homeDir: preparedHome
     });
 
     const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
     const output = loggedText();
 
-    expect(config.profiles["CJY-PERSONAL"].npm?.extraConfig?.["//registry.npmjs.org/:_authToken"]).toBeUndefined();
-    expect(output).toContain("Set profile value: CJY-PERSONAL npm.extraConfig[//registry.npmjs.org/:_authToken]");
-    expect(output).toContain("Unset profile value: CJY-PERSONAL npm.extraConfig[//registry.npmjs.org/:_authToken]");
+    expect(config.profiles["personal"].npm?.extraConfig?.["//registry.npmjs.org/:_authToken"]).toBeUndefined();
+    expect(output).toContain("Set profile value: personal npm.extraConfig[//registry.npmjs.org/:_authToken]");
+    expect(output).toContain("Unset profile value: personal npm.extraConfig[//registry.npmjs.org/:_authToken]");
     expect(output).not.toContain("plain-text-token");
     expect(errorSpy).not.toHaveBeenCalled();
   });
@@ -125,22 +125,22 @@ describe("cli actions", () => {
     const appPaths = createAppPaths(preparedHome);
 
     await writeJsonFile(appPaths.stateFile, {
-      activeProfile: "CJY-WORK",
+      activeProfile: "work",
       lastSwitchStatus: "success"
     });
 
-    await runCli(["profile", "clone", "CJY-WORK", "CJY-STAGING"], { homeDir: preparedHome });
-    await runCli(["profile", "rename", "CJY-WORK", "CJY-OFFICE"], { homeDir: preparedHome });
+    await runCli(["profile", "clone", "work", "staging"], { homeDir: preparedHome });
+    await runCli(["profile", "rename", "work", "office"], { homeDir: preparedHome });
 
     const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
     const state = (await readJsonFile(appPaths.stateFile)) as { activeProfile?: string };
     const output = loggedText();
 
-    expect(config.profiles["CJY-STAGING"]).toEqual(config.profiles["CJY-OFFICE"]);
-    expect(config.profiles["CJY-WORK"]).toBeUndefined();
-    expect(state.activeProfile).toBe("CJY-OFFICE");
-    expect(output).toContain("Cloned profile: CJY-WORK -> CJY-STAGING");
-    expect(output).toContain("Renamed profile: CJY-WORK -> CJY-OFFICE");
+    expect(config.profiles["staging"]).toEqual(config.profiles["office"]);
+    expect(config.profiles["work"]).toBeUndefined();
+    expect(state.activeProfile).toBe("office");
+    expect(output).toContain("Cloned profile: work -> staging");
+    expect(output).toContain("Renamed profile: work -> office");
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
@@ -149,22 +149,22 @@ describe("cli actions", () => {
     const appPaths = createAppPaths(preparedHome);
 
     await writeJsonFile(appPaths.stateFile, {
-      activeProfile: "CJY-WORK"
+      activeProfile: "work"
     });
-    await runCli(["profile", "remove", "CJY-WORK"], { homeDir: preparedHome });
+    await runCli(["profile", "remove", "work"], { homeDir: preparedHome });
 
     const config = await readJsonFile<PkgSwitchConfig>(appPaths.configFile);
     const errorOutput = errorSpy.mock.calls.map((call) => call.join(" ")).join("\n");
 
-    expect(errorOutput).toContain("Cannot remove active profile: CJY-WORK");
-    expect(config.profiles["CJY-WORK"]).toBeDefined();
+    expect(errorOutput).toContain("Cannot remove active profile: work");
+    expect(config.profiles["work"]).toBeDefined();
     expect(process.exitCode).toBe(1);
   });
 
   it("switch 和 current 应切换配置并展示当前状态", async () => {
     const preparedHome = await prepareHome();
 
-    await runCli(["switch", "CJY-WORK"], { homeDir: preparedHome });
+    await runCli(["switch", "work"], { homeDir: preparedHome });
     await runCli(["current"], { homeDir: preparedHome });
 
     expect(errorSpy).not.toHaveBeenCalled();
@@ -172,18 +172,18 @@ describe("cli actions", () => {
     const output = loggedText();
 
     expect(npmrc).toContain("registry=https://nexus.example.com/repository/npm-group/");
-    expect(output).toContain("Switched to CJY-WORK");
-    expect(output).toContain("Active profile: CJY-WORK");
+    expect(output).toContain("Switched to work");
+    expect(output).toContain("Active profile: work");
   });
 
   it("switch --dry-run 应预览写入内容但不落盘、不创建 state", async () => {
     const preparedHome = await prepareHome();
     const appPaths = createAppPaths(preparedHome);
 
-    await runCli(["switch", "CJY-WORK", "--dry-run"], { homeDir: preparedHome });
+    await runCli(["switch", "work", "--dry-run"], { homeDir: preparedHome });
 
     const output = loggedText();
-    expect(output).toContain("Dry run for profile: CJY-WORK");
+    expect(output).toContain("Dry run for profile: work");
     expect(output).toContain("registry=https://nexus.example.com/repository/npm-group/");
     expect(output).toContain("_authToken=pla***ken");
     expect(output).not.toContain("plain-text-token");
@@ -195,10 +195,10 @@ describe("cli actions", () => {
     const preparedHome = await prepareHome();
 
     await writeFile(path.join(preparedHome, ".npmrc"), "registry=https://old.example.com/\n_authToken=old-token\n", "utf8");
-    await runCli(["switch", "CJY-WORK", "--diff"], { homeDir: preparedHome });
+    await runCli(["switch", "work", "--diff"], { homeDir: preparedHome });
 
     const output = loggedText();
-    expect(output).toContain("Diff for profile: CJY-WORK");
+    expect(output).toContain("Diff for profile: work");
     expect(output).toContain("-registry=https://old.example.com/");
     expect(output).toContain("+registry=https://nexus.example.com/repository/npm-group/");
     expect(output).toContain("-_authToken=old***ken");
@@ -242,7 +242,7 @@ describe("cli actions", () => {
     const preparedHome = await prepareHome();
     const commands: Array<{ command: string; args: string[] }> = [];
 
-    await runCli(["switch", "CJY-WORK", "--cache-clean", "smart"], {
+    await runCli(["switch", "work", "--cache-clean", "smart"], {
       homeDir: preparedHome,
       runCacheCommand: async (command, args) => {
         commands.push({ command, args });
@@ -268,7 +268,7 @@ describe("cli actions", () => {
         cacheCleanMode: "smart"
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             registry: "https://nexus.example.com/repository/npm-group/"
           }
@@ -276,7 +276,7 @@ describe("cli actions", () => {
       }
     });
 
-    await runCli(["switch", "CJY-WORK", "--no-cache-clean"], {
+    await runCli(["switch", "work", "--no-cache-clean"], {
       homeDir: preparedHome,
       runCacheCommand: async () => {
         throw new Error("cache clean should not run");
@@ -289,7 +289,7 @@ describe("cli actions", () => {
   it("switch --cache-clean 非法模式应设置失败退出码且不写入 rc 文件", async () => {
     const preparedHome = await prepareHome();
 
-    await runCli(["switch", "CJY-WORK", "--cache-clean", "invalid"], { homeDir: preparedHome });
+    await runCli(["switch", "work", "--cache-clean", "invalid"], { homeDir: preparedHome });
 
     const errorOutput = errorSpy.mock.calls.map((call) => call.join(" ")).join("\n");
     expect(errorOutput).toContain("Invalid cache clean mode: invalid");
@@ -300,7 +300,7 @@ describe("cli actions", () => {
   it("switch --cache-clean 缺少模式时应设置失败退出码且不写入 rc 文件", async () => {
     const preparedHome = await prepareHome();
 
-    await runCli(["switch", "CJY-WORK", "--cache-clean"], { homeDir: preparedHome });
+    await runCli(["switch", "work", "--cache-clean"], { homeDir: preparedHome });
 
     const errorOutput = errorSpy.mock.calls.map((call) => call.join(" ")).join("\n");
     expect(errorOutput).toContain("cache clean mode is required");

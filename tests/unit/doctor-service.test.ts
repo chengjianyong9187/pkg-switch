@@ -88,7 +88,7 @@ describe("runDoctor", () => {
         }
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             alwaysAuth: true
           }
@@ -124,7 +124,7 @@ describe("runDoctor", () => {
         version: 1
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             registry: "https://nexus.example.com/repository/npm-public/",
             alwaysAuth: true,

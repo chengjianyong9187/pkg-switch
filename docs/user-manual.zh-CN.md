@@ -452,6 +452,8 @@ pkg-switch backup list
 ## 12. 关联文档
 
 - [English User Manual](user-manual.en.md)
+- [P0 / P1 版本变更说明](release-notes.zh-CN.md)
+- [English Release Notes](release-notes.en.md)
 - [README](../README.md)
 - [中文 README](../README.zh-CN.md)
 - [示例配置](../examples/config.example.json)

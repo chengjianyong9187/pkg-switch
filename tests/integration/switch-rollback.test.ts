@@ -37,7 +37,7 @@ describe("switchProfile rollback", () => {
         }
       },
       profiles: {
-        "CJY-WORK": {
+        "work": {
           npm: {
             registry: "https://nexus.example.com/repository/npm-group/"
           }
@@ -49,7 +49,7 @@ describe("switchProfile rollback", () => {
 
     await expect(
       switchProfile(
-        { homeDir, profileName: "CJY-WORK", skipCacheClean: true },
+        { homeDir, profileName: "work", skipCacheClean: true },
         {
           writeTextFile: async (filePath, content) => {
             if (filePath.endsWith(".yarnrc.yml")) {

@@ -22,14 +22,14 @@ describe("getCurrentStatus", () => {
     const appPaths = createAppPaths(homeDir);
 
     await writeJsonFile(appPaths.stateFile, {
-      activeProfile: "CJY-WORK",
+      activeProfile: "work",
       lastBackupId: "backup-001",
       lastSwitchStatus: "success"
     });
 
     await expect(getCurrentStatus({ homeDir })).resolves.toEqual({
       active: true,
-      activeProfile: "CJY-WORK",
+      activeProfile: "work",
       lastBackupId: "backup-001",
       lastSwitchStatus: "success",
       configFile: appPaths.configFile,
